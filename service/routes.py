@@ -44,3 +44,19 @@ def index():
 ######################################################################
 
 # Todo: Place your REST API code here ...
+
+# DELETE AN ORDER
+@app.route("/orders/<int:order_id>", methods=["DELETE"])
+def delete_orders(order_id):
+    """
+    Delete an Order
+
+    This endpoint will delete an Order based on the id specified in the path
+    """
+    app.logger.info("Request to delete order with id: %s", order_id)
+
+    order = Order.find(order_id)
+    if order:
+        order.delete()
+
+    return "", status.HTTP_204_NO_CONTENT
