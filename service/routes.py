@@ -33,8 +33,9 @@ from service.common import status
 @app.route("/")
 def index():
     """Root URL response"""
+    app.logger.info("Request for Root URL")
     return (
-        "Reminder: return some useful information in json format about the service here",
+        jsonify(name="Orders REST API Service", version="1.0"),
         status.HTTP_200_OK,
     )
 
@@ -44,6 +45,7 @@ def index():
 ######################################################################
 
 # Todo: Place your REST API code here ...
+
 
 # DELETE AN ORDER
 @app.route("/orders/<int:order_id>", methods=["DELETE"])
