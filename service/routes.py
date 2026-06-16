@@ -62,3 +62,52 @@ def delete_orders(order_id):
         order.delete()
 
     return "", status.HTTP_204_NO_CONTENT
+
+
+######################################################################
+# CREATE A NEW ORDER
+######################################################################
+@app.route("/orders", methods=["POST"])
+def create_orders():
+    """
+    Create an Order
+    This endpoint will create an Order based the data in the body that is posted
+    """
+    app.logger.info("Request to Create an Order...")
+    check_content_type("application/json")
+
+    order = Order()
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order.deserialize(data)
+
+    # Save the new Order to the database
+    order.create()
+    app.logger.info("Order with new id [%s] saved!", order.id)
+
+    # Return the location of the new Order
+    location_url = url_for("get_orders", order_id=order.id, _external=True)
+    return order.serialize(), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+######################################################################
+# Checks the ContentType of a request
+######################################################################
+def check_content_type(content_type) -> None:
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
+        abort(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
+        )
+
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        f"Content-Type must be {content_type}",
+    )
