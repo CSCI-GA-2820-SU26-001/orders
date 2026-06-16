@@ -25,10 +25,12 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Order, OrderItem
+from tests.factories import OrderFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
+BASE_URL = "/orders"
 
 
 ######################################################################
@@ -110,3 +112,30 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     # Todo: Add your test cases here...
+    # ----------------------------------------------------------
+    # TEST CREATE
+    # ----------------------------------------------------------
+    def test_create_order(self):
+        """It should Create a new Order"""
+        test_order = OrderFactory()
+        logging.debug("Test Order: %s", test_order.serialize())
+        response = self.client.post(BASE_URL, json=test_order.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Make sure location header is set
+        location = response.headers.get("Location", None)
+        self.assertIsNotNone(location)
+
+        # Check the data is correct
+        new_order = response.get_json()
+        self.assertEqual(new_order["customer_id"], test_order.customer_id)
+        self.assertEqual(new_order["status"], test_order.status)
+        self.assertIsNotNone(new_order["id"])  # ID should be auto-generated
+
+        # Check that the location header was correct
+        response = self.client.get(location)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        fetched_order = response.get_json()
+        self.assertEqual(fetched_order["id"], new_order["id"])
+        self.assertEqual(fetched_order["customer_id"], new_order["customer_id"])
+        self.assertEqual(fetched_order["status"], new_order["status"])
