@@ -139,3 +139,25 @@ class TestYourResourceService(TestCase):
         self.assertEqual(fetched_order["id"], new_order["id"])
         self.assertEqual(fetched_order["customer_id"], new_order["customer_id"])
         self.assertEqual(fetched_order["status"], new_order["status"])
+
+    # ----------------------------------------------------------
+    # TEST LIST
+    # ----------------------------------------------------------
+    def test_list_orders(self):
+        """It should List all Orders"""
+        # create 3 orders using the factory
+        for _ in range(3):
+            test_order = OrderFactory()
+            self.client.post(BASE_URL, json=test_order.serialize())
+
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 3)
+
+    def test_list_orders_empty(self):
+        """It should return an empty list when there are no Orders"""
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data, [])

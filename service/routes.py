@@ -129,3 +129,22 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+
+
+######################################################################
+# LIST ALL ORDERS
+######################################################################
+@app.route("/orders", methods=["GET"])
+def list_orders():
+    """
+    List all Orders
+
+    This endpoint will return all Orders in the database
+    """
+    app.logger.info("Request for order list")
+
+    orders = Order.all()
+    results = [order.serialize() for order in orders]
+
+    app.logger.info("Returning %d orders", len(results))
+    return jsonify(results), status.HTTP_200_OK
