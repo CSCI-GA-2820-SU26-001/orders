@@ -111,6 +111,37 @@ class TestYourResourceService(TestCase):
         resp = self.client.get("/orders/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_update_order(self):
+        """It should Update an existing Order"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        new_order = order.serialize()
+        new_order["status"] = "closed"
+
+        resp = self.client.put(f"{BASE_URL}/{order.id}", json=new_order)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["id"], order.id)
+        self.assertEqual(data["customer_id"], order.customer_id)
+        self.assertEqual(data["status"], "closed")
+
+    def test_update_order_not_found(self):
+        """It should not Update an Order that was not found"""
+        order = OrderFactory()
+        resp = self.client.put(f"{BASE_URL}/0", json=order.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_order_wrong_content_type(self):
+        """It should not Update an Order with the wrong content type"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        resp = self.client.put(
+            f"{BASE_URL}/{order.id}",
+            data=order.serialize(),
+            content_type="text/plain",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
     # Todo: Add your test cases here...
     # ----------------------------------------------------------
     # TEST CREATE
