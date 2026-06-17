@@ -47,7 +47,25 @@ def index():
 # Todo: Place your REST API code here ...
 
 
+######################################################################
+# READ AN ORDER
+######################################################################
+@app.route("/orders/<int:order_id>", methods=["GET"])
+def get_orders(order_id):
+    """
+    Retrieve a single Order
+    This endpoint will return an Order based on its id
+    """
+    app.logger.info("Request to Retrieve an order with id [%s]", order_id)
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+    return jsonify(order.serialize()), status.HTTP_200_OK
+
+
+######################################################################
 # DELETE AN ORDER
+######################################################################
 @app.route("/orders/<int:order_id>", methods=["DELETE"])
 def delete_orders(order_id):
     """

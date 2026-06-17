@@ -74,27 +74,43 @@ class TestYourResourceService(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-    
+
     def test_delete_an_order(self):
         """It should Delete one Order and leave others intact"""
         order1 = Order(customer_id=1, status="open")
         order1.create()
         order2 = Order(customer_id=2, status="open")
         order2.create()
-        self.assertEqual(len(Order.all()), 2)          
+        self.assertEqual(len(Order.all()), 2)
 
         resp = self.client.delete(f"/orders/{order1.id}")  # 删一条
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(resp.data), 0)
 
-        self.assertIsNone(Order.find(order1.id))        
-        self.assertIsNotNone(Order.find(order2.id))      
-        self.assertEqual(len(Order.all()), 1)           
+        self.assertIsNone(Order.find(order1.id))
+        self.assertIsNotNone(Order.find(order2.id))
+        self.assertEqual(len(Order.all()), 1)
 
     def test_delete_non_existing_order(self):
         """It should Delete a non-existing Order and return 204"""
         resp = self.client.delete("/orders/0")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_get_order(self):
+        """It should Read a single Order"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        resp = self.client.get(f"/orders/{order.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["customer_id"], 1)
+        self.assertEqual(data["status"], "open")
+
+    def test_get_order_not_found(self):
+        """It should return 404 for a non existing Order"""
+        resp = self.client.get("/orders/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     # Todo: Add your test cases here...
     # ----------------------------------------------------------
     # TEST CREATE
