@@ -6,7 +6,7 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from service.models import Order, OrderItem, DataValidationError, db
+from service.models import Order, OrderItem, db
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -55,6 +55,17 @@ class TestOrderModel(TestCase):
         """It should return None for an Order that does not exist"""
         found = Order.find(0)
         self.assertIsNone(found)
+
+    def test_update_an_order(self):
+        """It should update an Order in the database"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        self.assertIsNotNone(order.id)
+        order.status = "closed"
+        order.update()
+
+        found = Order.find(order.id)
+        self.assertEqual(found.status, "closed")
 
     def test_serialize_an_order(self):
         """It should serialize an Order"""

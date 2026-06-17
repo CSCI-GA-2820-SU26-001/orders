@@ -23,7 +23,7 @@ and Delete Orders
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app
-from service.models import Order, OrderItem
+from service.models import Order
 from service.common import status
 
 
@@ -60,6 +60,29 @@ def get_orders(order_id):
     order = Order.find(order_id)
     if not order:
         abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+    return jsonify(order.serialize()), status.HTTP_200_OK
+
+
+######################################################################
+# UPDATE AN ORDER
+######################################################################
+@app.route("/orders/<int:order_id>", methods=["PUT"])
+def update_orders(order_id):
+    """
+    Update an Order
+    This endpoint will update an Order based on its id
+    """
+    app.logger.info("Request to update order with id: %s", order_id)
+    check_content_type("application/json")
+
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    order.deserialize(request.get_json())
+    order.id = order_id
+    order.update()
+
     return jsonify(order.serialize()), status.HTTP_200_OK
 
 
