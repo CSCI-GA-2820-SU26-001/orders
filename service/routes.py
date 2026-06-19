@@ -48,6 +48,33 @@ def index():
 
 
 ######################################################################
+# CREATE A NEW ORDER
+######################################################################
+@app.route("/orders", methods=["POST"])
+def create_orders():
+    """
+    Create an Order
+    This endpoint will create an Order based the data in the body that is posted
+    """
+    app.logger.info("Request to Create an Order...")
+    check_content_type("application/json")
+
+    order = Order()
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order.deserialize(data)
+
+    # Save the new Order to the database
+    order.create()
+    app.logger.info("Order with new id [%s] saved!", order.id)
+
+    # Return the location of the new Order
+    location_url = url_for("get_orders", order_id=order.id, _external=True)
+    return order.serialize(), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+######################################################################
 # READ AN ORDER
 ######################################################################
 @app.route("/orders/<int:order_id>", methods=["GET"])
@@ -106,30 +133,22 @@ def delete_orders(order_id):
 
 
 ######################################################################
-# CREATE A NEW ORDER
+# LIST ALL ORDERS
 ######################################################################
-@app.route("/orders", methods=["POST"])
-def create_orders():
+@app.route("/orders", methods=["GET"])
+def list_orders():
     """
-    Create an Order
-    This endpoint will create an Order based the data in the body that is posted
+    List all Orders
+
+    This endpoint will return all Orders in the database
     """
-    app.logger.info("Request to Create an Order...")
-    check_content_type("application/json")
+    app.logger.info("Request for order list")
 
-    order = Order()
-    # Get the data from the request and deserialize it
-    data = request.get_json()
-    app.logger.info("Processing: %s", data)
-    order.deserialize(data)
+    orders = Order.all()
+    results = [order.serialize() for order in orders]
 
-    # Save the new Order to the database
-    order.create()
-    app.logger.info("Order with new id [%s] saved!", order.id)
-
-    # Return the location of the new Order
-    location_url = url_for("get_orders", order_id=order.id, _external=True)
-    return order.serialize(), status.HTTP_201_CREATED, {"Location": location_url}
+    app.logger.info("Returning %d orders", len(results))
+    return jsonify(results), status.HTTP_200_OK
 
 
 ######################################################################
@@ -191,19 +210,19 @@ def check_content_type(content_type) -> None:
 
 
 ######################################################################
-# LIST ALL ORDERS
+# READ AN ITEM FROM AN ORDER
 ######################################################################
-@app.route("/orders", methods=["GET"])
-def list_orders():
+@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["GET"])
+def get_order_item(order_id, item_id):
     """
-    List all Orders
-
-    This endpoint will return all Orders in the database
+    Retrieve an item from an Order
+    This endpoint will return an OrderItem based on its id
     """
-    app.logger.info("Request for order list")
-
-    orders = Order.all()
-    results = [order.serialize() for order in orders]
-
-    app.logger.info("Returning %d orders", len(results))
-    return jsonify(results), status.HTTP_200_OK
+    app.logger.info("Request to retrieve item %s for order %s", item_id, order_id)
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+    item = OrderItem.find(item_id)
+    if not item:
+        abort(status.HTTP_404_NOT_FOUND, f"Item with id '{item_id}' was not found.")
+    return jsonify(item.serialize()), status.HTTP_200_OK
