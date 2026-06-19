@@ -23,7 +23,7 @@ and Delete Orders
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app
-from service.models import Order
+from service.models import Order, OrderItem
 from service.common import status
 
 
@@ -130,6 +130,42 @@ def create_orders():
     # Return the location of the new Order
     location_url = url_for("get_orders", order_id=order.id, _external=True)
     return order.serialize(), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+######################################################################
+# ADD ITEMS TO AN ORDER
+######################################################################
+@app.route("/orders/<int:order_id>/items", methods=["POST"])
+def add_order_item(order_id):
+    """
+    Add an item to an Order
+    This endpoint will add an item to an existing Order based the data in the body that is posted
+    """
+    app.logger.info("Requesting to add an item to an order...")
+    check_content_type("application/json")
+
+    # find the order
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, "Order not found")
+
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    order_item = OrderItem()
+    order_item.deserialize(data)
+
+    # Update the order with the new item
+    order.items.append(order_item)
+    order.update()
+
+    app.logger.info("Item added to order [%s]", order.id)
+
+    # Return the location of the new Order
+    location_url = url_for(
+        "get_order_item", order_id=order_id, item_id=order_item.id, _external=True
+    )
+    return order_item.serialize(), status.HTTP_201_CREATED, {"Location": location_url}
 
 
 ######################################################################
