@@ -275,3 +275,35 @@ class TestYourResourceService(TestCase):
         order.create()
         resp = self.client.get(f"/orders/{order.id}/items/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_list_items_in_order(self):
+        """It should List all items in an Order"""
+        # create an order
+        order = Order(customer_id=1, status="open")
+        order.create()
+        # add two items to it
+        item1 = OrderItem(product_id=100, quantity=2, price=9.99)
+        item2 = OrderItem(product_id=200, quantity=1, price=19.99)
+        order.items.append(item1)
+        order.items.append(item2)
+        order.update()
+
+        resp = self.client.get(f"/orders/{order.id}/items")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+
+    def test_list_items_empty_order(self):
+        """It should return an empty list for an Order with no items"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+
+        resp = self.client.get(f"/orders/{order.id}/items")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data, [])
+
+    def test_list_items_order_not_found(self):
+        """It should return 404 when the Order does not exist"""
+        resp = self.client.get("/orders/0/items")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
