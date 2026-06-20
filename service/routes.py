@@ -226,3 +226,25 @@ def get_order_item(order_id, item_id):
     if not item:
         abort(status.HTTP_404_NOT_FOUND, f"Item with id '{item_id}' was not found.")
     return jsonify(item.serialize()), status.HTTP_200_OK
+
+######################################################################
+# LIST ALL ITEMS IN AN ORDER
+######################################################################
+@app.route("/orders/<int:order_id>/items", methods=["GET"])
+def list_order_items(order_id):
+    """
+    List all items in an Order
+
+    This endpoint will return all items belonging to an Order
+    """
+    app.logger.info("Request to list items for order %s", order_id)
+
+    # First make sure the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    results = [item.serialize() for item in order.items]
+
+    app.logger.info("Returning %d items for order %s", len(results), order_id)
+    return jsonify(results), status.HTTP_200_OK
