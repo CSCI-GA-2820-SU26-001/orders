@@ -2,6 +2,7 @@
 OrderItem Model
 """
 
+from decimal import Decimal, InvalidOperation
 from .persistent_base import db, PersistentBase, DataValidationError
 
 
@@ -33,8 +34,16 @@ class OrderItem(db.Model, PersistentBase):
         """Load item from dictionary"""
         try:
             self.product_id = data["product_id"]
-            self.quantity = data["quantity"]
-            self.price = data["price"]
+            quantity = data["quantity"]
+            price = Decimal(str(data["price"]))
+            if quantity <= 0:
+                raise DataValidationError("Quantity must be greater than 0")
+            if price < 0:
+                raise DataValidationError("Price cannot be negative")
+            self.quantity = quantity
+            self.price = price
         except KeyError as e:
-            raise DataValidationError("Missing field: " + str(e))
+            raise DataValidationError("Missing field: " + str(e)) from e
+        except (TypeError, InvalidOperation) as e:
+            raise DataValidationError("Invalid field: " + str(e)) from e
         return self
