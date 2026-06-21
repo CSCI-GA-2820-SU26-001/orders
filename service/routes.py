@@ -35,7 +35,11 @@ def index():
     """Root URL response"""
     app.logger.info("Request for Root URL")
     return (
-        jsonify(name="Orders REST API Service", version="1.0"),
+        jsonify(
+            name="Orders REST API Service",
+            version="1.0",
+            paths=url_for("list_orders", _external=True),
+        ),
         status.HTTP_200_OK,
     )
 
@@ -226,6 +230,7 @@ def get_order_item(order_id, item_id):
     if not item:
         abort(status.HTTP_404_NOT_FOUND, f"Item with id '{item_id}' was not found.")
     return jsonify(item.serialize()), status.HTTP_200_OK
+
 
 ######################################################################
 # LIST ALL ITEMS IN AN ORDER

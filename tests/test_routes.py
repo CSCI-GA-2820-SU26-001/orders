@@ -74,6 +74,11 @@ class TestYourResourceService(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["name"], "Orders REST API Service")
+        self.assertEqual(data["version"], "1.0")
+        self.assertIn("paths", data)
+        self.assertIn(BASE_URL, data["paths"])
 
     def test_delete_an_order(self):
         """It should Delete one Order and leave others intact"""
@@ -199,9 +204,6 @@ class TestYourResourceService(TestCase):
         # Add item to order
         response = self.client.post(f"{BASE_URL}/{order.id}/items", json=item_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Check the response
-        new_item = response.get_json()
 
         # Verify item was added to order
         updated_order = Order.find(order.id)
