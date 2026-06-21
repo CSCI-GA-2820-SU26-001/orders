@@ -253,3 +253,27 @@ def list_order_items(order_id):
 
     app.logger.info("Returning %d items for order %s", len(results), order_id)
     return jsonify(results), status.HTTP_200_OK
+
+######################################################################
+# DELETE AN ITEM FROM AN ORDER
+######################################################################
+@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
+def delete_order_item(order_id, item_id):
+    """
+    Delete an item from an Order
+
+    This endpoint will remove an item from an existing Order
+    """
+    app.logger.info("Request to delete item %s from order %s", item_id, order_id)
+
+    # Make sure the order exists
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    # Find the item; if it exists, delete it
+    item = OrderItem.find(item_id)
+    if item:
+        item.delete()
+
+    return "", status.HTTP_204_NO_CONTENT

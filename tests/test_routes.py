@@ -309,3 +309,49 @@ class TestYourResourceService(TestCase):
         """It should return 404 when the Order does not exist"""
         resp = self.client.get("/orders/0/items")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_item_from_order(self):
+        """It should Delete an item from an Order (multiple items)"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        item1 = OrderItem(product_id=100, quantity=2, price=9.99)
+        item2 = OrderItem(product_id=200, quantity=1, price=19.99)
+        order.items.append(item1)
+        order.items.append(item2)
+        order.update()
+
+        resp = self.client.delete(f"/orders/{order.id}/items/{item1.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        # the deleted item is gone, the other remains
+        self.assertIsNone(OrderItem.find(item1.id))
+        self.assertIsNotNone(OrderItem.find(item2.id))
+
+    def test_delete_only_item_from_order(self):
+        """It should leave an Order with no items after deleting its only item"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        item = OrderItem(product_id=100, quantity=2, price=9.99)
+        order.items.append(item)
+        order.update()
+
+        resp = self.client.delete(f"/orders/{order.id}/items/{item.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        # order still exists but has no items
+        updated_order = Order.find(order.id)
+        self.assertIsNotNone(updated_order)
+        self.assertEqual(len(updated_order.items), 0)
+
+    def test_delete_non_existing_item(self):
+        """It should return 204 when deleting an item that does not exist"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+
+        resp = self.client.delete(f"/orders/{order.id}/items/0")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_item_order_not_found(self):
+        """It should return 404 when the Order does not exist"""
+        resp = self.client.delete("/orders/0/items/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
