@@ -172,6 +172,21 @@ class TestYourResourceService(TestCase):
         self.assertEqual(fetched_order["customer_id"], new_order["customer_id"])
         self.assertEqual(fetched_order["status"], new_order["status"])
 
+    def test_create_order_missing_customer_id(self):
+        """It should return 400 when creating an Order without customer_id"""
+        response = self.client.post(BASE_URL, json={"status": "open"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_order_no_content_type(self):
+        """It should return 415 when creating an Order with no content type"""
+        response = self.client.post(BASE_URL, data='{"customer_id": 1}')
+        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_method_not_allowed(self):
+        """It should return 405 for methods that are not allowed"""
+        response = self.client.put(BASE_URL, json={"customer_id": 1})
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def test_list_orders(self):
         """It should List all Orders"""
         # create 3 orders using the factory
@@ -259,6 +274,26 @@ class TestYourResourceService(TestCase):
         response = self.client.post(f"{BASE_URL}/{order.id}/items", json=item_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_add_item_invalid_quantity(self):
+        """It should return 400 when item quantity is not positive"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+
+        item_data = {"product_id": 100, "quantity": 0, "price": 19.99}
+
+        response = self.client.post(f"{BASE_URL}/{order.id}/items", json=item_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_add_item_negative_price(self):
+        """It should return 400 when item price is negative"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+
+        item_data = {"product_id": 100, "quantity": 5, "price": -1.00}
+
+        response = self.client.post(f"{BASE_URL}/{order.id}/items", json=item_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_get_order_item(self):
         """It should Read an item from an Order"""
         order = Order(customer_id=1, status="open")
@@ -276,6 +311,11 @@ class TestYourResourceService(TestCase):
         order = Order(customer_id=1, status="open")
         order.create()
         resp = self.client.get(f"/orders/{order.id}/items/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_order_item_order_not_found(self):
+        """It should return 404 when reading an item from an Order that does not exist"""
+        resp = self.client.get("/orders/0/items/1")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_list_items_in_order(self):

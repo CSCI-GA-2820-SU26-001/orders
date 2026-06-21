@@ -254,6 +254,7 @@ def list_order_items(order_id):
     app.logger.info("Returning %d items for order %s", len(results), order_id)
     return jsonify(results), status.HTTP_200_OK
 
+
 ######################################################################
 # DELETE AN ITEM FROM AN ORDER
 ######################################################################
