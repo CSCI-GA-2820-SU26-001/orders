@@ -1,64 +1,247 @@
-# NYU DevOps Project Template
+# Orders REST API Service
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
 
-This is a skeleton you can use to start your projects.
+The Orders service is a Flask REST API for managing customer orders and the items inside each order. It stores data in PostgreSQL through SQLAlchemy and includes test coverage for the order model, item model, service routes, and Flask CLI commands.
 
-**Note:** _Feel free to overwrite this `README.md` file with the one that describes your project._
+## Features
 
-## Overview
+- Create, read, update, delete, and list orders
+- Add, read, update, delete, and list items in an order
+- Validate required order and item fields
+- Return JSON error responses for invalid requests
+- Run unit tests with a 95% minimum coverage gate
 
-This project template contains starter code for your class project. The `/service` folder contains your `models.py` file for your model and a `routes.py` file for your service. The `/tests` folder has test case starter code for testing the model and the service separately. All you need to do is add your functionality. You can use the [lab-flask-tdd](https://github.com/nyu-devops/lab-flask-tdd) for code examples to copy from.
+## Technology
 
-## Automatic Setup
+- Python 3.12
+- Flask
+- Flask-SQLAlchemy
+- PostgreSQL
+- Pipenv
+- Pytest, pytest-cov, flake8, pylint
 
-The best way to use this repo is to start your own repo using it as a git template. To do this just press the green **Use this template** button in GitHub and this will become the source for your repository.
-
-## Manual Setup
-
-You can also clone this repository and then copy and paste the starter code into your project repo folder on your local computer. Be careful not to copy over your own `README.md` file so be selective in what you copy.
-
-There are 4 hidden files that you will need to copy manually if you use the Mac Finder or Windows Explorer to copy files from this folder into your repo folder.
-
-These should be copied using a bash shell as follows:
-
-```bash
-    cp .gitignore  ../<your_repo_folder>/
-    cp .flaskenv ../<your_repo_folder>/
-    cp .gitattributes ../<your_repo_folder>/
-```
-
-## Contents
-
-The project contains the following:
+## Project Structure
 
 ```text
-.gitignore          - this will ignore vagrant and other metadata files
-.flaskenv           - Environment variables to configure Flask
-.gitattributes      - File to gix Windows CRLF issues
-.devcontainers/     - Folder with support for VSCode Remote Containers
-dot-env-example     - copy to .env to use environment variables
-pyproject.toml      - Poetry list of Python libraries required by your code
+service/
+├── __init__.py
+├── config.py
+├── routes.py
+├── common/
+│   ├── cli_commands.py
+│   ├── error_handlers.py
+│   ├── log_handlers.py
+│   └── status.py
+└── models/
+    ├── __init__.py
+    ├── order.py
+    ├── order_items.py
+    └── persistent_base.py
 
-service/                   - service python package
-├── __init__.py            - package initializer
-├── config.py              - configuration parameters
-├── models.py              - module with business models
-├── routes.py              - module with service routes
-└── common                 - common code package
-    ├── cli_commands.py    - Flask command to recreate all tables
-    ├── error_handlers.py  - HTTP error handling code
-    ├── log_handlers.py    - logging setup code
-    └── status.py          - HTTP status constants
-
-tests/                     - test cases package
-├── __init__.py            - package initializer
-├── factories.py           - Factory for testing with fake objects
-├── test_cli_commands.py   - test suite for the CLI
-├── test_models.py         - test suite for business models
-└── test_routes.py         - test suite for service routes
+tests/
+├── factories.py
+├── test_cli_commands.py
+├── test_models.py
+└── test_routes.py
 ```
+
+## Setup
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/CSCI-GA-2820-SU26-001/orders.git
+cd orders
+pipenv install --dev
+```
+
+Create a local `.env` file:
+
+```bash
+cp dot-env-example .env
+```
+
+Edit `.env` so that it contains these local development settings:
+
+```bash
+FLASK_APP=wsgi:app
+PORT=8080
+DATABASE_URI=postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+```
+
+Start PostgreSQL if you do not already have a local database running:
+
+```bash
+docker run --name orders-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=postgres \
+  -p 5432:5432 \
+  -d postgres:15-alpine
+```
+
+If the container already exists, start it instead:
+
+```bash
+docker start orders-postgres
+```
+
+Create the database tables:
+
+```bash
+pipenv run flask db-create
+```
+
+## Running the Service
+
+Start the service locally:
+
+```bash
+pipenv run honcho start
+```
+
+The API will be available at:
+
+```text
+http://localhost:8080
+```
+
+Check the root endpoint:
+
+```bash
+curl http://localhost:8000/
+```
+
+## Running Tests
+
+Run the full test suite with coverage:
+
+```bash
+pipenv run pytest --pspec --cov=service --cov-fail-under=95 --disable-warnings
+```
+
+Run lint checks:
+
+```bash
+pipenv run flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
+pipenv run pylint service tests --max-line-length=127
+```
+
+The Makefile also provides shortcuts:
+
+```bash
+make test
+make lint
+make run
+```
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/` | Return service information |
+| `POST` | `/orders` | Create an order |
+| `GET` | `/orders` | List all orders |
+| `GET` | `/orders/{order_id}` | Read one order |
+| `PUT` | `/orders/{order_id}` | Update one order |
+| `DELETE` | `/orders/{order_id}` | Delete one order |
+| `POST` | `/orders/{order_id}/items` | Add an item to an order |
+| `GET` | `/orders/{order_id}/items` | List all items in an order |
+| `GET` | `/orders/{order_id}/items/{item_id}` | Read one item in an order |
+| `PUT` | `/orders/{order_id}/items/{item_id}` | Update one item in an order |
+| `DELETE` | `/orders/{order_id}/items/{item_id}` | Delete one item from an order |
+
+## Example Requests
+
+Set the base URL:
+
+```bash
+BASE_URL=http://localhost:8080
+```
+
+Create an order:
+
+```bash
+curl -i -X POST "$BASE_URL/orders" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id": 1, "status": "open"}'
+```
+
+List all orders:
+
+```bash
+curl -i "$BASE_URL/orders"
+```
+
+Read one order:
+
+```bash
+curl -i "$BASE_URL/orders/1"
+```
+
+Update an order:
+
+```bash
+curl -i -X PUT "$BASE_URL/orders/1" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id": 1, "status": "closed"}'
+```
+
+Add an item to an order:
+
+```bash
+curl -i -X POST "$BASE_URL/orders/1/items" \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 100, "quantity": 2, "price": 19.99}'
+```
+
+List all items in an order:
+
+```bash
+curl -i "$BASE_URL/orders/1/items"
+```
+
+Read one item in an order:
+
+```bash
+curl -i "$BASE_URL/orders/1/items/1"
+```
+
+Update an item in an order:
+
+```bash
+curl -i -X PUT "$BASE_URL/orders/1/items/1" \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 200, "quantity": 5, "price": 9.99}'
+```
+
+Delete an item from an order:
+
+```bash
+curl -i -X DELETE "$BASE_URL/orders/1/items/1"
+```
+
+Delete an order:
+
+```bash
+curl -i -X DELETE "$BASE_URL/orders/1"
+```
+
+## Data Validation
+
+Order requests require:
+
+- `customer_id`
+- optional `status`, which defaults to `open`
+
+Order item requests require:
+
+- `product_id`
+- `quantity`, which must be greater than `0`
+- `price`, which cannot be negative
+
+Invalid JSON request bodies or missing required fields return `400 Bad Request`. Requests with the wrong or missing `Content-Type` return `415 Unsupported Media Type`.
 
 ## License
 
