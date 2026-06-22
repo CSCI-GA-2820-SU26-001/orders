@@ -67,7 +67,7 @@ Edit `.env` so that it contains these local development settings:
 
 ```bash
 FLASK_APP=wsgi:app
-PORT=8000
+PORT=8080
 DATABASE_URI=postgresql+psycopg://postgres:postgres@localhost:5432/postgres
 ```
 
@@ -104,7 +104,7 @@ pipenv run honcho start
 The API will be available at:
 
 ```text
-http://localhost:8000
+http://localhost:8080
 ```
 
 Check the root endpoint:
@@ -157,7 +157,7 @@ make run
 Set the base URL:
 
 ```bash
-BASE_URL=http://localhost:8000
+BASE_URL=http://localhost:8080
 ```
 
 Create an order:
