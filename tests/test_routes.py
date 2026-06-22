@@ -318,6 +318,71 @@ class TestYourResourceService(TestCase):
         resp = self.client.get("/orders/0/items/1")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_update_order_item(self):
+        """It should Update an item in an Order"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        item = OrderItem(product_id=100, quantity=2, price=9.99)
+        order.items.append(item)
+        order.update()
+
+        new_item = {"product_id": 200, "quantity": 5, "price": 19.99}
+        resp = self.client.put(f"{BASE_URL}/{order.id}/items/{item.id}", json=new_item)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], item.id)
+        self.assertEqual(data[0]["product_id"], new_item["product_id"])
+        self.assertEqual(data[0]["quantity"], new_item["quantity"])
+        self.assertEqual(data[0]["price"], "19.99")
+
+        updated_item = OrderItem.find(item.id)
+        self.assertEqual(updated_item.product_id, new_item["product_id"])
+        self.assertEqual(updated_item.quantity, new_item["quantity"])
+
+    def test_update_order_item_not_found(self):
+        """It should return 404 when updating an item that does not exist"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+
+        new_item = {"product_id": 200, "quantity": 5, "price": 19.99}
+        resp = self.client.put(f"{BASE_URL}/{order.id}/items/0", json=new_item)
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_order_item_order_not_found(self):
+        """It should return 404 when updating an item for an Order that does not exist"""
+        new_item = {"product_id": 200, "quantity": 5, "price": 19.99}
+        resp = self.client.put(f"{BASE_URL}/0/items/1", json=new_item)
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_order_item_wrong_content_type(self):
+        """It should return 415 when updating an item with the wrong content type"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        item = OrderItem(product_id=100, quantity=2, price=9.99)
+        order.items.append(item)
+        order.update()
+
+        resp = self.client.put(
+            f"{BASE_URL}/{order.id}/items/{item.id}",
+            data={"product_id": 200, "quantity": 5, "price": 19.99},
+            content_type="text/plain",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_update_order_item_invalid_quantity(self):
+        """It should return 400 when updating an item with an invalid quantity"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        item = OrderItem(product_id=100, quantity=2, price=9.99)
+        order.items.append(item)
+        order.update()
+
+        new_item = {"product_id": 200, "quantity": 0, "price": 19.99}
+        resp = self.client.put(f"{BASE_URL}/{order.id}/items/{item.id}", json=new_item)
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_list_items_in_order(self):
         """It should List all items in an Order"""
         # create an order

@@ -256,6 +256,37 @@ def list_order_items(order_id):
 
 
 ######################################################################
+# UPDATE AN ITEM IN AN ORDER
+######################################################################
+@app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["PUT"])
+def update_order_item(order_id, item_id):
+    """
+    Update an item in an Order
+
+    This endpoint will update an item belonging to an existing Order
+    """
+    app.logger.info("Request to update item %s for order %s", item_id, order_id)
+    check_content_type("application/json")
+
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    item = OrderItem.find(item_id)
+    if not item or item.order_id != order.id:
+        abort(status.HTTP_404_NOT_FOUND, f"Item with id '{item_id}' was not found.")
+
+    item.deserialize(request.get_json())
+    item.id = item_id
+    item.order_id = order_id
+    item.update()
+
+    results = [order_item.serialize() for order_item in order.items]
+    app.logger.info("Item %s updated for order %s", item_id, order_id)
+    return jsonify(results), status.HTTP_200_OK
+
+
+######################################################################
 # DELETE AN ITEM FROM AN ORDER
 ######################################################################
 @app.route("/orders/<int:order_id>/items/<int:item_id>", methods=["DELETE"])
