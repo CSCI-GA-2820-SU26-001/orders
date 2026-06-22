@@ -247,6 +247,6 @@ Invalid JSON request bodies or missing required fields return `400 Bad Request`.
 
 Copyright (c) 2016, 2025 [John Rofrano](https://www.linkedin.com/in/JohnRofrano/). All rights reserved.
 
-Licensed under the Apache License. See [LICENSE](LICENSE).
+Licensed under the Apache License. See [LICENSE](LICENSE)
 
-This repository is part of the New York University master class **CSCI-GA.2820 DevOps and Agile Methodologies**.
+This repository is part of the New York University (NYU) masters class: **CSCI-GA.2820-001 DevOps and Agile Methodologies** created and taught by [John Rofrano](https://cs.nyu.edu/~rofrano/), Adjunct Instructor, NYU Courant Institute, Graduate Division, Computer Science, and NYU Stern School of Business.
