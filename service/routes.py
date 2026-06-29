@@ -341,3 +341,32 @@ def delete_order_item(order_id, item_id):
         item.delete()
 
     return "", status.HTTP_204_NO_CONTENT
+
+
+######################################################################
+# CANCEL AN ORDER
+######################################################################
+
+
+@app.route("/orders/<int:order_id>/cancel", methods=["PUT"])
+def cancel_order(order_id):
+    """
+    Cancel an Order
+    This endpoint will cancel an Order based on its id
+    """
+    app.logger.info("Request to cancel order with id: %s", order_id)
+
+    order = Order.find(order_id)
+    if not order:
+        abort(status.HTTP_404_NOT_FOUND, f"Order with id '{order_id}' was not found.")
+
+    if order.status == "cancelled":
+        abort(
+            status.HTTP_409_CONFLICT,
+            f"Order with id '{order_id}' is already cancelled.",
+        )
+
+    order.status = "cancelled"
+    order.update()
+
+    return jsonify(order.serialize()), status.HTTP_200_OK
