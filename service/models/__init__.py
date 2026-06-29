@@ -1,5 +1,5 @@
 """
-Models package for the Orders service
+Service model package exports persistent base objects and domain models.
 """
 
 from .persistent_base import db, DataValidationError

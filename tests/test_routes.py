@@ -460,3 +460,76 @@ class TestYourResourceService(TestCase):
         """It should return 404 when the Order does not exist"""
         resp = self.client.delete("/orders/0/items/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_list_orders_by_status(self):
+        """It should list orders filtered by status"""
+        Order(customer_id=1, status="open").create()
+        Order(customer_id=2, status="closed").create()
+        Order(customer_id=3, status="open").create()
+
+        resp = self.client.get(f"{BASE_URL}?status=open")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+        self.assertTrue(all(order["status"] == "open" for order in data))
+
+    def test_list_orders_by_customer_id(self):
+        """It should list orders filtered by customer_id"""
+        Order(customer_id=1, status="open").create()
+        Order(customer_id=2, status="closed").create()
+        Order(customer_id=1, status="closed").create()
+
+        resp = self.client.get(f"{BASE_URL}?customer_id=1")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+        self.assertTrue(all(order["customer_id"] == 1 for order in data))
+
+    def test_list_orders_by_id(self):
+        """It should list orders filtered by id"""
+        order1 = Order(customer_id=1, status="open")
+        order1.create()
+        order2 = Order(customer_id=2, status="closed")
+        order2.create()
+
+        resp = self.client.get(f"{BASE_URL}?id={order1.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], order1.id)
+
+    def test_list_orders_by_item_id(self):
+        """It should list orders filtered by item_id"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        item = OrderItem(product_id=100, quantity=2, price=9.99)
+        order.items.append(item)
+        order.update()
+
+        resp = self.client.get(f"{BASE_URL}?item_id={item.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], order.id)
+
+    def test_list_orders_customer_id_must_be_integer(self):
+        """It should return 400 when customer_id is not an integer"""
+        resp = self.client.get(f"{BASE_URL}?customer_id=abc")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("customer_id must be an integer", resp.get_data(as_text=True))
+
+    def test_list_orders_id_must_be_integer(self):
+        """It should return 400 when id is not an integer"""
+        resp = self.client.get(f"{BASE_URL}?id=abc")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("id must be an integer", resp.get_data(as_text=True))
+
+    def test_list_orders_item_id_must_be_integer(self):
+        """It should return 400 when item_id is not an integer"""
+        resp = self.client.get(f"{BASE_URL}?item_id=abc")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("item_id must be an integer", resp.get_data(as_text=True))

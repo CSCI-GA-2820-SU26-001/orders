@@ -137,16 +137,50 @@ def delete_orders(order_id):
 ######################################################################
 # LIST ALL ORDERS
 ######################################################################
+def _get_int_query_param(name):
+    value = request.args.get(name)
+    if value is None:
+        return None
+
+    try:
+        return int(value)
+    except ValueError:
+        abort(status.HTTP_400_BAD_REQUEST, f"{name} must be an integer")
+
+
+def _apply_order_filters(query):
+    status_filter = request.args.get("status")
+    if status_filter:
+        query = query.filter(Order.status == status_filter)
+
+    customer_id = _get_int_query_param("customer_id")
+    if customer_id is not None:
+        query = query.filter(Order.customer_id == customer_id)
+
+    order_id = _get_int_query_param("id")
+    if order_id is not None:
+        query = query.filter(Order.id == order_id)
+
+    item_id = _get_int_query_param("item_id")
+    if item_id is not None:
+        query = query.join(Order.items).filter(OrderItem.id == item_id)
+
+    return query
+
+
 @app.route("/orders", methods=["GET"])
 def list_orders():
     """
     List all Orders
 
     This endpoint will return all Orders in the database
+
+    Added additional feature to query by a specified attribute
     """
     app.logger.info("Request for order list")
 
-    orders = Order.all()
+    query = _apply_order_filters(Order.query)
+    orders = query.all()
     results = [order.serialize() for order in orders]
 
     app.logger.info("Returning %d orders", len(results))

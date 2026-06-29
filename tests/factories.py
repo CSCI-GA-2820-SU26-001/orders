@@ -6,7 +6,7 @@ from factory.declarations import Sequence
 from service.models import Order
 
 
-class OrderFactory(factory.Factory):
+class OrderFactory(factory.Factory):  # pylint: disable=too-few-public-methods
     """Creates fake orders for testing"""
 
     class Meta:  # pylint: disable=too-few-public-methods
