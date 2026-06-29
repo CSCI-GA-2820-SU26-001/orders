@@ -17,6 +17,9 @@ class OrderItem(db.Model, PersistentBase):
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Numeric(10, 2), nullable=False)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def __repr__(self):
         return f"<OrderItem id={self.id} order_id={self.order_id}>"
 
