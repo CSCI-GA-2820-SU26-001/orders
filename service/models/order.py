@@ -33,5 +33,5 @@ class Order(db.Model, PersistentBase):
             self.customer_id = data["customer_id"]
             self.status = data.get("status", "open")
         except KeyError as e:
-            raise DataValidationError("Missing field: " + str(e))
+            raise DataValidationError("Missing field: " + str(e)) from e
         return self
