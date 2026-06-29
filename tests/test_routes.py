@@ -533,3 +533,27 @@ class TestYourResourceService(TestCase):
         resp = self.client.get(f"{BASE_URL}?item_id=abc")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("item_id must be an integer", resp.get_data(as_text=True))
+
+    ######################################################################
+    # CANCEL AN ORDER
+    ######################################################################
+    def test_cancel_order(self):
+        """It should Cancel an Order and return status as cancelled"""
+        order = Order(customer_id=1, status="open")
+        order.create()
+        resp = self.client.put(f"/orders/{order.id}/cancel")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["status"], "cancelled")
+
+    def test_cancel_order_not_found(self):
+        """It should return 404 when cancelling an Order that does not exist"""
+        resp = self.client.put("/orders/0/cancel")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_cancel_order_already_cancelled(self):
+        """It should return 409 when cancelling an Order that is already cancelled"""
+        order = Order(customer_id=1, status="cancelled")
+        order.create()
+        resp = self.client.put(f"/orders/{order.id}/cancel")
+        self.assertEqual(resp.status_code, status.HTTP_409_CONFLICT)
