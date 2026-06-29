@@ -2,6 +2,7 @@
 Test cases for Order Model
 """
 
+# pylint: disable=duplicate-code, unexpected-keyword-arg
 import os
 import logging
 from unittest import TestCase

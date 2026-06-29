@@ -18,7 +18,7 @@
 TestOrder API Service Test Suite
 """
 
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code, unexpected-keyword-arg
 import os
 import logging
 from unittest import TestCase
