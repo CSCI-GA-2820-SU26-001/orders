@@ -45,6 +45,16 @@ def index():
 
 
 ######################################################################
+# HEALTH CHECK
+######################################################################
+@app.route("/health", methods=["GET"])
+def health():
+    """Health Check Endpoint"""
+    app.logger.info("Request for Health Check")
+    return jsonify({"status": "OK"}), status.HTTP_200_OK
+
+
+######################################################################
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
