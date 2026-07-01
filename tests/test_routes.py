@@ -80,6 +80,13 @@ class TestYourResourceService(TestCase):
         self.assertIn("paths", data)
         self.assertIn(BASE_URL, data["paths"])
 
+    def test_health(self):
+        """It should return health status"""
+        resp = self.client.get("/health")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data, {"status": "OK"})
+
     def test_delete_an_order(self):
         """It should Delete one Order and leave others intact"""
         order1 = Order(customer_id=1, status="open")
