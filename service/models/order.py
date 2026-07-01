@@ -7,6 +7,8 @@ from .persistent_base import db, PersistentBase, DataValidationError
 
 
 class OrderStatus(str, Enum):
+    """Valid statuses for an Order"""
+
     OPEN = "open"
     CLOSED = "closed"
     CONFIRMED = "confirmed"
