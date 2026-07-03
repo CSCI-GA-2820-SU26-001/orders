@@ -32,13 +32,26 @@ from service.common import status
 ######################################################################
 @app.route("/")
 def index():
-    """Root URL response"""
+    """Root URL response with service info and available endpoints"""
     app.logger.info("Request for Root URL")
     return (
         jsonify(
             name="Orders REST API Service",
             version="1.0",
             paths=url_for("list_orders", _external=True),
+            endpoints={
+                "list_orders": "GET /orders",
+                "create_order": "POST /orders",
+                "read_order": "GET /orders/{id}",
+                "update_order": "PUT /orders/{id}",
+                "delete_order": "DELETE /orders/{id}",
+                "list_items": "GET /orders/{id}/items",
+                "add_item": "POST /orders/{id}/items",
+                "read_item": "GET /orders/{id}/items/{item_id}",
+                "update_item": "PUT /orders/{id}/items/{item_id}",
+                "delete_item": "DELETE /orders/{id}/items/{item_id}",
+                "cancel_order": "PUT /orders/{id}/cancel",
+            },
         ),
         status.HTTP_200_OK,
     )

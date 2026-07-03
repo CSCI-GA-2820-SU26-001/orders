@@ -71,14 +71,18 @@ class TestYourResourceService(TestCase):
     ######################################################################
 
     def test_index(self):
-        """It should call the home page"""
+        """It should return service info and available endpoints"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
         data = resp.get_json()
         self.assertEqual(data["name"], "Orders REST API Service")
         self.assertEqual(data["version"], "1.0")
-        self.assertIn("paths", data)
-        self.assertIn(BASE_URL, data["paths"])
+        # the new endpoints field should exist and document operations
+        self.assertIn("endpoints", data)
+        self.assertEqual(data["endpoints"]["list_orders"], "GET /orders")
+        self.assertEqual(data["endpoints"]["create_order"], "POST /orders")
+        self.assertIn("cancel_order", data["endpoints"])
 
     def test_health(self):
         """It should return health status"""
