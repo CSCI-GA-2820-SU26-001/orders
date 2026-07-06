@@ -114,7 +114,7 @@ http://localhost:8080
 Check the root endpoint:
 
 ```bash
-curl http://localhost:8000/
+curl http://localhost:8080/
 ```
 
 ## Running Tests
@@ -155,6 +155,22 @@ make run
 | `GET` | `/orders/{order_id}/items/{item_id}` | Read one item in an order |
 | `PUT` | `/orders/{order_id}/items/{item_id}` | Update one item in an order |
 | `DELETE` | `/orders/{order_id}/items/{item_id}` | Delete one item from an order |
+| `GET` | `/health` | Health check, returns {"status": "OK"} |
+| `PUT` | `/orders/{order_id}/cancel` | Cancel an order (action) |
+
+### Query Parameters for Listing Orders
+
+The `GET /orders` endpoint supports filtering with query strings:
+
+| Parameter | Example | Description |
+| --- | --- | --- |
+| `customer_id` | `/orders?customer_id=1` | Return orders for one customer |
+| `status` | `/orders?status=open` | Return orders with a given status |
+| `id` | `/orders?id=5` | Return the order with a given id |
+| `item_id` | `/orders?item_id=3` | Return orders containing a given item |
+
+Invalid (non-integer) values for `customer_id`, `id`, or `item_id` return `400 Bad Request`.
+
 
 ## Example Requests
 
@@ -226,6 +242,18 @@ Delete an item from an order:
 curl -i -X DELETE "$BASE_URL/orders/1/items/1"
 ```
 
+Cancel an order:
+
+```bash
+curl -i -X PUT "$BASE_URL/orders/1/cancel"
+```
+
+Check service health:
+
+```bash
+curl -i "$BASE_URL/health"
+```
+
 Delete an order:
 
 ```bash
@@ -246,6 +274,8 @@ Order item requests require:
 - `price`, which cannot be negative
 
 Invalid JSON request bodies or missing required fields return `400 Bad Request`. Requests with the wrong or missing `Content-Type` return `415 Unsupported Media Type`.
+
+Cancelling an already cancelled order returns `409 Conflict`.
 
 ## License
 
