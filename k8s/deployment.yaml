@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+  labels:
+    app: orders
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: orders
+
+  template:
+    metadata:
+      labels:
+        app: orders
+
+    spec:
+      containers:
+      - name: orders
+        image: cluster-registry:5000/orders:1.0
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 8080
+
+        env:
+        - name: DATABASE_URI
+          value: postgresql+psycopg://postgres:postgres@postgres:5432/orders
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 60
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 60
