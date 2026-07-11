@@ -30,7 +30,7 @@ from tests.factories import OrderFactory
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
-BASE_URL = "/orders"
+BASE_URL = "/api/orders"
 
 
 ######################################################################
@@ -80,8 +80,8 @@ class TestYourResourceService(TestCase):
         self.assertEqual(data["version"], "1.0")
         # the new endpoints field should exist and document operations
         self.assertIn("endpoints", data)
-        self.assertEqual(data["endpoints"]["list_orders"], "GET /orders")
-        self.assertEqual(data["endpoints"]["create_order"], "POST /orders")
+        self.assertEqual(data["endpoints"]["list_orders"], "GET /api/orders")
+        self.assertEqual(data["endpoints"]["create_order"], "POST /api/orders")
         self.assertIn("cancel_order", data["endpoints"])
 
     def test_health(self):
@@ -99,7 +99,7 @@ class TestYourResourceService(TestCase):
         order2.create()
         self.assertEqual(len(Order.all()), 2)
 
-        resp = self.client.delete(f"/orders/{order1.id}")  # 删一条
+        resp = self.client.delete(f"/api/orders/{order1.id}")  # 删一条
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(resp.data), 0)
 
@@ -109,14 +109,14 @@ class TestYourResourceService(TestCase):
 
     def test_delete_non_existing_order(self):
         """It should Delete a non-existing Order and return 204"""
-        resp = self.client.delete("/orders/0")
+        resp = self.client.delete("/api/orders/0")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_get_order(self):
         """It should Read a single Order"""
         order = Order(customer_id=1, status="open")
         order.create()
-        resp = self.client.get(f"/orders/{order.id}")
+        resp = self.client.get(f"/api/orders/{order.id}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data["customer_id"], 1)
@@ -311,7 +311,7 @@ class TestYourResourceService(TestCase):
         order.create()
         item = OrderItem(order_id=order.id, product_id=101, quantity=2, price=9.99)
         item.create()
-        resp = self.client.get(f"/orders/{order.id}/items/{item.id}")
+        resp = self.client.get(f"/api/orders/{order.id}/items/{item.id}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data["product_id"], 101)
@@ -321,7 +321,7 @@ class TestYourResourceService(TestCase):
         """It should return 404 for an item that does not exist"""
         order = Order(customer_id=1, status="open")
         order.create()
-        resp = self.client.get(f"/orders/{order.id}/items/0")
+        resp = self.client.get(f"/api/orders/{order.id}/items/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_order_item_order_not_found(self):
@@ -406,7 +406,7 @@ class TestYourResourceService(TestCase):
         order.items.append(item2)
         order.update()
 
-        resp = self.client.get(f"/orders/{order.id}/items")
+        resp = self.client.get(f"/api/orders/{order.id}/items")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), 2)
@@ -416,14 +416,14 @@ class TestYourResourceService(TestCase):
         order = Order(customer_id=1, status="open")
         order.create()
 
-        resp = self.client.get(f"/orders/{order.id}/items")
+        resp = self.client.get(f"/api/orders/{order.id}/items")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data, [])
 
     def test_list_items_order_not_found(self):
         """It should return 404 when the Order does not exist"""
-        resp = self.client.get("/orders/0/items")
+        resp = self.client.get("/api/orders/0/items")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_item_from_order(self):
@@ -436,7 +436,7 @@ class TestYourResourceService(TestCase):
         order.items.append(item2)
         order.update()
 
-        resp = self.client.delete(f"/orders/{order.id}/items/{item1.id}")
+        resp = self.client.delete(f"/api/orders/{order.id}/items/{item1.id}")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
         # the deleted item is gone, the other remains
@@ -451,7 +451,7 @@ class TestYourResourceService(TestCase):
         order.items.append(item)
         order.update()
 
-        resp = self.client.delete(f"/orders/{order.id}/items/{item.id}")
+        resp = self.client.delete(f"/api/orders/{order.id}/items/{item.id}")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
         # order still exists but has no items
@@ -464,12 +464,12 @@ class TestYourResourceService(TestCase):
         order = Order(customer_id=1, status="open")
         order.create()
 
-        resp = self.client.delete(f"/orders/{order.id}/items/0")
+        resp = self.client.delete(f"/api/orders/{order.id}/items/0")
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_delete_item_order_not_found(self):
         """It should return 404 when the Order does not exist"""
-        resp = self.client.delete("/orders/0/items/0")
+        resp = self.client.delete("/api/orders/0/items/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_list_orders_by_status(self):
@@ -552,19 +552,19 @@ class TestYourResourceService(TestCase):
         """It should Cancel an Order and return status as cancelled"""
         order = Order(customer_id=1, status="open")
         order.create()
-        resp = self.client.put(f"/orders/{order.id}/cancel")
+        resp = self.client.put(f"/api/orders/{order.id}/cancel")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data["status"], "cancelled")
 
     def test_cancel_order_not_found(self):
         """It should return 404 when cancelling an Order that does not exist"""
-        resp = self.client.put("/orders/0/cancel")
+        resp = self.client.put("/api/orders/0/cancel")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_cancel_order_already_cancelled(self):
         """It should return 409 when cancelling an Order that is already cancelled"""
         order = Order(customer_id=1, status="cancelled")
         order.create()
-        resp = self.client.put(f"/orders/{order.id}/cancel")
+        resp = self.client.put(f"/api/orders/{order.id}/cancel")
         self.assertEqual(resp.status_code, status.HTTP_409_CONFLICT)
