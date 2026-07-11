@@ -52,4 +52,6 @@ class Order(db.Model, PersistentBase):
             self.status = OrderStatus(status)
         except KeyError as e:
             raise DataValidationError("Missing field: " + str(e)) from e
+        except ValueError as e:
+            raise DataValidationError("Invalid field: " + str(e)) from e
         return self

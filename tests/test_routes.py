@@ -66,6 +66,16 @@ class TestYourResourceService(TestCase):
         """This runs after each test"""
         db.session.remove()
 
+    def assert_json_error(self, response, status_code, error):
+        """It should return an error response as JSON"""
+        self.assertEqual(response.status_code, status_code)
+        self.assertIn("application/json", response.content_type)
+        data = response.get_json()
+        self.assertIsInstance(data, dict)
+        self.assertEqual(data["status"], status_code)
+        self.assertEqual(data["error"], error)
+        self.assertIn("message", data)
+
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -188,15 +198,41 @@ class TestYourResourceService(TestCase):
         response = self.client.post(BASE_URL, json={"status": "open"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_create_order_missing_customer_id_returns_json_error(self):
+        """It should return JSON when creating an Order without customer_id"""
+        response = self.client.post(BASE_URL, json={"status": "open"})
+        self.assert_json_error(response, status.HTTP_400_BAD_REQUEST, "Bad Request")
+
+    def test_create_order_invalid_status_returns_json_error(self):
+        """It should return JSON when creating an Order with an invalid status"""
+        response = self.client.post(
+            BASE_URL, json={"customer_id": 1, "status": "not-a-status"}
+        )
+        self.assert_json_error(response, status.HTTP_400_BAD_REQUEST, "Bad Request")
+
     def test_create_order_no_content_type(self):
         """It should return 415 when creating an Order with no content type"""
         response = self.client.post(BASE_URL, data='{"customer_id": 1}')
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
+    def test_create_order_no_content_type_returns_json_error(self):
+        """It should return JSON when creating an Order with no content type"""
+        response = self.client.post(BASE_URL, data='{"customer_id": 1}')
+        self.assert_json_error(
+            response, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported Media Type"
+        )
+
     def test_method_not_allowed(self):
         """It should return 405 for methods that are not allowed"""
         response = self.client.put(BASE_URL, json={"customer_id": 1})
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_method_not_allowed_returns_json_error(self):
+        """It should return JSON for methods that are not allowed"""
+        response = self.client.put(BASE_URL, json={"customer_id": 1})
+        self.assert_json_error(
+            response, status.HTTP_405_METHOD_NOT_ALLOWED, "Method Not Allowed"
+        )
 
     def test_list_orders(self):
         """It should List all Orders"""
@@ -533,6 +569,11 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("customer_id must be an integer", resp.get_data(as_text=True))
 
+    def test_list_orders_invalid_query_returns_json_error(self):
+        """It should return JSON when a query parameter is invalid"""
+        resp = self.client.get(f"{BASE_URL}?customer_id=abc")
+        self.assert_json_error(resp, status.HTTP_400_BAD_REQUEST, "Bad Request")
+
     def test_list_orders_id_must_be_integer(self):
         """It should return 400 when id is not an integer"""
         resp = self.client.get(f"{BASE_URL}?id=abc")
@@ -561,6 +602,11 @@ class TestYourResourceService(TestCase):
         """It should return 404 when cancelling an Order that does not exist"""
         resp = self.client.put("/api/orders/0/cancel")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_cancel_order_not_found_returns_json_error(self):
+        """It should return JSON when cancelling an Order that does not exist"""
+        resp = self.client.put("/api/orders/0/cancel")
+        self.assert_json_error(resp, status.HTTP_404_NOT_FOUND, "Not Found")
 
     def test_cancel_order_already_cancelled(self):
         """It should return 409 when cancelling an Order that is already cancelled"""

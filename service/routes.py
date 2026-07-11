@@ -23,9 +23,11 @@ automatically at /apidocs.
 """
 
 from typing import NoReturn
+from http import HTTPStatus
 from flask import request
 from flask import current_app as app
 from flask_restx import Api, Resource, fields
+from werkzeug.exceptions import HTTPException
 from service.models import Order, OrderItem, DataValidationError
 from service.common import status
 
@@ -465,7 +467,17 @@ class OrderItemResource(Resource):
 def abort(error_code: int, message: str) -> NoReturn:
     """Logs errors before aborting, matching the RESTX error response shape"""
     app.logger.error(message)
-    api.abort(error_code, message)
+    api.abort(
+        error_code,
+        message,
+        status=error_code,
+        error=_error_name(error_code),
+    )
+
+
+def _error_name(error_code: int) -> str:
+    """Return the standard HTTP reason phrase for a status code"""
+    return HTTPStatus(error_code).phrase
 
 
 @api.errorhandler(DataValidationError)
@@ -484,3 +496,17 @@ def handle_validation_error(error):
         "error": "Bad Request",
         "message": message,
     }, status.HTTP_400_BAD_REQUEST
+
+
+@api.errorhandler(HTTPException)
+def handle_http_exception(error):
+    """Handles HTTP errors as JSON using the service error response shape"""
+    error_code = getattr(error, "code", status.HTTP_500_INTERNAL_SERVER_ERROR)
+    data = getattr(error, "data", {}) or {}
+    message = data.get("message", getattr(error, "description", str(error)))
+    app.logger.warning(message)
+    return {
+        "status": error_code,
+        "error": _error_name(error_code),
+        "message": message,
+    }, error_code
