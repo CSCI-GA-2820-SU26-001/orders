@@ -22,6 +22,7 @@ and Delete Orders, using Flask-RESTX so Swagger docs are generated
 automatically at /apidocs.
 """
 
+from typing import NoReturn
 from flask import request
 from flask import current_app as app
 from flask_restx import Api, Resource, fields
@@ -461,7 +462,7 @@ class OrderItemResource(Resource):
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
-def abort(error_code: int, message: str):
+def abort(error_code: int, message: str) -> NoReturn:
     """Logs errors before aborting, matching the RESTX error response shape"""
     app.logger.error(message)
     api.abort(error_code, message)
