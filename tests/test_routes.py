@@ -134,7 +134,7 @@ class TestYourResourceService(TestCase):
 
     def test_get_order_not_found(self):
         """It should return 404 for a non existing Order"""
-        resp = self.client.get("/orders/0")
+        resp = self.client.get("/api/orders/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_order(self):
@@ -362,7 +362,7 @@ class TestYourResourceService(TestCase):
 
     def test_get_order_item_order_not_found(self):
         """It should return 404 when reading an item from an Order that does not exist"""
-        resp = self.client.get("/orders/0/items/1")
+        resp = self.client.get("/api/orders/0/items/1")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_update_order_item(self):
