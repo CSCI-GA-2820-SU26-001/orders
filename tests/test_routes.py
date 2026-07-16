@@ -616,11 +616,13 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_409_CONFLICT)
 
     def test_swagger_docs_are_available(self):
+        """It should return the Swagger UI documentation"""
         response = self.client.get("/apidocs/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("swagger", response.get_data(as_text=True).lower())
 
     def test_swagger_spec_contains_order_paths_and_models(self):
+        """It should return the Swagger specification with Order paths and models"""
         response = self.client.get("/api/swagger.json")
         self.assertEqual(response.status_code, 200)
 
