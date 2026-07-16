@@ -41,7 +41,7 @@ api = Api(
     description="This service manages Orders and the Items inside them.",
     default="orders",
     default_label="Order operations",
-    doc="/apidocs",
+    doc="/apidocs/",
     prefix="/api",
 )
 
