@@ -614,3 +614,22 @@ class TestYourResourceService(TestCase):
         order.create()
         resp = self.client.put(f"/api/orders/{order.id}/cancel")
         self.assertEqual(resp.status_code, status.HTTP_409_CONFLICT)
+
+    def test_swagger_docs_are_available(self):
+        response = self.client.get("/apidocs/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("swagger", response.get_data(as_text=True).lower())
+
+    def test_swagger_spec_contains_order_paths_and_models(self):
+        response = self.client.get("/api/swagger.json")
+        self.assertEqual(response.status_code, 200)
+
+        data = response.get_json()
+        self.assertIn("/orders", data["paths"])
+        self.assertIn("/orders/{order_id}", data["paths"])
+        self.assertIn("/orders/{order_id}/items", data["paths"])
+
+        definitions = data.get("definitions", {})
+        self.assertIn("Order", definitions)
+        self.assertIn("OrderItemData", definitions)
+        self.assertIn("OrderItem", definitions)
