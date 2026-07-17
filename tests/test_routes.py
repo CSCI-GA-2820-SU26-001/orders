@@ -94,6 +94,18 @@ class TestYourResourceService(TestCase):
         self.assertEqual(data["endpoints"]["create_order"], "POST /api/orders")
         self.assertIn("cancel_order", data["endpoints"])
 
+    def test_admin_ui(self):
+        """It should serve the Admin UI for listing items"""
+        resp = self.client.get("/admin")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("text/html", resp.content_type)
+        self.assertIn(b'id="order-id"', resp.data)
+        self.assertIn(b'id="list-items-btn"', resp.data)
+        self.assertIn(b'id="items-table"', resp.data)
+        self.assertIn(b">Item ID<", resp.data)
+        self.assertIn(b">Name<", resp.data)
+        self.assertIn(b">Quantity<", resp.data)
+
     def test_health(self):
         """It should return health status"""
         resp = self.client.get("/health")

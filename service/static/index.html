@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Orders Admin</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <script src="/static/js/admin.js" defer></script>
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <p class="eyebrow">Orders service</p>
+        <h1>Admin UI</h1>
+        <p>Look up every item belonging to a specific order.</p>
+      </header>
+
+      <section class="panel" aria-labelledby="list-items-heading">
+        <h2 id="list-items-heading">List order items</h2>
+
+        <form id="list-items-form">
+          <div class="field">
+            <label for="order-id">Order ID</label>
+            <input
+              id="order-id"
+              name="order_id"
+              type="number"
+              min="1"
+              step="1"
+              required
+              autocomplete="off"
+            >
+          </div>
+          <button id="list-items-btn" type="submit">List Items</button>
+        </form>
+
+        <p id="items-message" class="message" role="status" aria-live="polite"></p>
+
+        <div class="table-wrap">
+          <table id="items-table">
+            <caption>Items in the selected order</caption>
+            <thead>
+              <tr>
+                <th scope="col">Item ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Quantity</th>
+              </tr>
+            </thead>
+            <tbody id="items-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

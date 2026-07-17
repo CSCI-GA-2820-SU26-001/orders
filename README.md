@@ -117,6 +117,12 @@ Check the root endpoint:
 curl http://localhost:8080/
 ```
 
+Open the Admin UI to list all items in an order:
+
+```text
+http://localhost:8080/admin
+```
+
 ## Running Tests
 
 Run the full test suite with coverage:
