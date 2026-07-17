@@ -122,6 +122,16 @@ def index():
 
 
 ######################################################################
+# ADMIN UI
+######################################################################
+@app.route("/admin")
+def admin_ui():
+    """Serve the Orders administration user interface."""
+    app.logger.info("Request for Admin UI")
+    return app.send_static_file("index.html")
+
+
+######################################################################
 # HEALTH CHECK
 ######################################################################
 @app.route("/health", methods=["GET"])
