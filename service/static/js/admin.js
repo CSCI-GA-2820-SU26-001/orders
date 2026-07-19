@@ -7,6 +7,12 @@ const createOrderButton = document.querySelector("#create-order-btn");
 const ordersTableBody = document.querySelector("#orders-table-body");
 const ordersMessage = document.querySelector("#orders-message");
 
+const readOrderForm = document.querySelector("#read-order-form");
+const readOrderIdInput = document.querySelector("#read-order-id");
+const readOrderButton = document.querySelector("#read-order-btn");
+const readOrderDetails = document.querySelector("#read-order-details");
+const readOrderMessage = document.querySelector("#read-order-message");
+
 const listItemsForm = document.querySelector("#list-items-form");
 const orderIdInput = document.querySelector("#order-id");
 const itemsTableBody = document.querySelector("#items-table-body");
@@ -23,12 +29,21 @@ function setItemsMessage(message, isError = false) {
   itemsMessage.classList.toggle("error", isError);
 }
 
+function setReadOrderMessage(message, isError = false) {
+  readOrderMessage.textContent = message;
+  readOrderMessage.classList.toggle("error", isError);
+}
+
 function clearOrdersTable() {
   ordersTableBody.replaceChildren();
 }
 
 function clearItemsTable() {
   itemsTableBody.replaceChildren();
+}
+
+function clearReadOrderDetails() {
+  readOrderDetails.replaceChildren();
 }
 
 function appendOrderRow(order) {
@@ -55,6 +70,42 @@ function appendItemRow(item) {
   });
 
   itemsTableBody.appendChild(row);
+}
+
+function renderReadOrderDetails(order, errorMessage = "") {
+  clearReadOrderDetails();
+
+  if (errorMessage) {
+    const message = document.createElement("p");
+    message.className = "message error";
+    message.textContent = errorMessage;
+    readOrderDetails.appendChild(message);
+    return;
+  }
+
+  if (!order) {
+    return;
+  }
+
+  const card = document.createElement("div");
+  card.className = "read-order-card";
+
+  const fields = [
+    ["Order ID", order.id],
+    ["Customer ID", order.customer_id],
+    ["Status", order.status],
+  ];
+
+  fields.forEach(([label, value]) => {
+    const paragraph = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = `${label}: `;
+    paragraph.appendChild(strong);
+    paragraph.appendChild(document.createTextNode(value ?? ""));
+    card.appendChild(paragraph);
+  });
+
+  readOrderDetails.appendChild(card);
 }
 
 async function errorMessage(response) {
@@ -126,6 +177,31 @@ async function createOrder(customerId, status) {
   }
 }
 
+async function readOrder(orderId) {
+  clearReadOrderDetails();
+  setReadOrderMessage("Reading order…");
+  readOrderButton.disabled = true;
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}`, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => ({}));
+      setReadOrderMessage(errorPayload.message || `Unable to read order (${response.status}).`, true);
+      return;
+    }
+
+    const order = await response.json();
+    setReadOrderMessage(`Order ${order.id} loaded.`);
+  } catch (_error) {
+    setReadOrderMessage("Unable to reach the Orders service.", true);
+  } finally {
+    readOrderButton.disabled = false;
+  }
+}
+
 async function listItems(orderId) {
   clearItemsTable();
   setItemsMessage("Loading items…");
@@ -165,6 +241,17 @@ createOrderForm.addEventListener("submit", (event) => {
   }
 
   createOrder(createCustomerIdInput.value, orderStatusInput.value);
+});
+
+readOrderForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  if (!readOrderIdInput.checkValidity()) {
+    readOrderIdInput.reportValidity();
+    return;
+  }
+
+  readOrder(readOrderIdInput.value);
 });
 
 listItemsForm.addEventListener("submit", (event) => {

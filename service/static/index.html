@@ -12,8 +12,32 @@
       <header>
         <p class="eyebrow">Orders service</p>
         <h1>Admin UI</h1>
-        <p>Create orders and inspect the items in a specific order.</p>
+        <p>Create orders, read order details, and inspect the items in a specific order.</p>
       </header>
+
+      <section class="panel" aria-labelledby="read-order-heading">
+      <h2 id="read-order-heading">Read order</h2>
+
+      <form id="read-order-form">
+        <div class="field">
+          <label for="read-order-id">Order ID</label>
+          <input
+            id="read-order-id"
+            name="order_id"
+            type="number"
+            min="1"
+            step="1"
+            required
+            autocomplete="off"
+          >
+        </div>
+
+        <button id="read-order-btn" type="submit">Read</button>
+      </form>
+
+      <p id="read-order-message" class="message" role="status" aria-live="polite"></p>
+      <div id="read-order-details" class="read-order-details" aria-live="polite"></div>
+    </section>
 
       <section class="panel" aria-labelledby="create-order-heading">
         <h2 id="create-order-heading">Create order</h2>
@@ -47,7 +71,9 @@
         </form>
 
         <p id="orders-message" class="message" role="status" aria-live="polite"></p>
+
         <h3>Listing all orders</h3>
+
         <div class="table-wrap">
           <table id="orders-table">
             <caption>Existing orders</caption>
@@ -79,6 +105,7 @@
               autocomplete="off"
             >
           </div>
+
           <button id="list-items-btn" type="submit">List Items</button>
         </form>
 
