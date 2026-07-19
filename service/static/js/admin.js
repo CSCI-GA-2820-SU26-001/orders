@@ -1,24 +1,21 @@
 "use strict";
 
+const createOrderForm = document.querySelector("#create-order-form");
+const createCustomerIdInput = document.querySelector("#create-customer-id");
+const orderStatusInput = document.querySelector("#order-status");
+const createOrderButton = document.querySelector("#create-order-btn");
+const ordersTableBody = document.querySelector("#orders-table-body");
+const ordersMessage = document.querySelector("#orders-message");
+
 const listItemsForm = document.querySelector("#list-items-form");
 const orderIdInput = document.querySelector("#order-id");
 const itemsTableBody = document.querySelector("#items-table-body");
 const itemsMessage = document.querySelector("#items-message");
 const listItemsButton = document.querySelector("#list-items-btn");
 
-const createOrderForm = document.querySelector("#create-order-form");
-const createCustomerIdInput = document.querySelector("#create-customer-id");
-const orderStatusInput = document.querySelector("#order-status");
-const ordersTableBody = document.querySelector("#orders-table-body");
-const ordersMessage = document.querySelector("#orders-message");
-const createOrderButton = document.querySelector("#create-order-btn");
-
-function clearItems() {
-  itemsTableBody.replaceChildren();
-}
-
-function clearOrders() {
-  ordersTableBody.replaceChildren();
+function setOrdersMessage(message, isError = false) {
+  ordersMessage.textContent = message;
+  ordersMessage.classList.toggle("error", isError);
 }
 
 function setItemsMessage(message, isError = false) {
@@ -26,26 +23,12 @@ function setItemsMessage(message, isError = false) {
   itemsMessage.classList.toggle("error", isError);
 }
 
-function setOrdersMessage(message, isError = false) {
-  ordersMessage.textContent = message;
-  ordersMessage.classList.toggle("error", isError);
+function clearOrdersTable() {
+  ordersTableBody.replaceChildren();
 }
 
-function displayName(item) {
-  return item.name ?? item.product_name ?? item.product_id ?? "";
-}
-
-function appendItemRow(item) {
-  const row = document.createElement("tr");
-  const values = [item.id, displayName(item), item.quantity];
-
-  values.forEach((value) => {
-    const cell = document.createElement("td");
-    cell.textContent = value ?? "";
-    row.appendChild(cell);
-  });
-
-  itemsTableBody.appendChild(row);
+function clearItemsTable() {
+  itemsTableBody.replaceChildren();
 }
 
 function appendOrderRow(order) {
@@ -61,6 +44,19 @@ function appendOrderRow(order) {
   ordersTableBody.appendChild(row);
 }
 
+function appendItemRow(item) {
+  const row = document.createElement("tr");
+  const values = [item.id, item.name ?? "", item.quantity ?? ""];
+
+  values.forEach((value) => {
+    const cell = document.createElement("td");
+    cell.textContent = value ?? "";
+    row.appendChild(cell);
+  });
+
+  itemsTableBody.appendChild(row);
+}
+
 async function errorMessage(response) {
   try {
     const error = await response.json();
@@ -70,35 +66,8 @@ async function errorMessage(response) {
   }
 }
 
-async function listItems(orderId) {
-  clearItems();
-  setItemsMessage("Loading items…");
-  listItemsButton.disabled = true;
-
-  try {
-    const response = await fetch(`/api/orders/${orderId}/items`, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      setItemsMessage(await errorMessage(response), true);
-      return;
-    }
-
-    const items = await response.json();
-    items.forEach(appendItemRow);
-    setItemsMessage(
-      items.length === 0 ? "This order has no items." : `${items.length} item(s) found.`
-    );
-  } catch (_error) {
-    setItemsMessage("Unable to reach the Orders service.", true);
-  } finally {
-    listItemsButton.disabled = false;
-  }
-}
-
 async function loadOrders() {
-  clearOrders();
+  clearOrdersTable();
   setOrdersMessage("Loading orders…");
 
   try {
@@ -113,9 +82,12 @@ async function loadOrders() {
 
     const orders = await response.json();
     orders.forEach(appendOrderRow);
-    setOrdersMessage(
-      orders.length === 0 ? "No orders yet." : `${orders.length} order(s) found.`
-    );
+
+    if (orders.length === 0) {
+      setOrdersMessage("No orders found.");
+    } else {
+      setOrdersMessage(`${orders.length} order(s) loaded.`);
+    }
   } catch (_error) {
     setOrdersMessage("Unable to reach the Orders service.", true);
   }
@@ -145,10 +117,8 @@ async function createOrder(customerId, status) {
       return;
     }
 
-    appendOrderRow(order);
+    await loadOrders();
     setOrdersMessage(`Order ${order.id} created successfully.`);
-    createOrderForm.reset();
-    orderStatusInput.value = "open";
   } catch (_error) {
     setOrdersMessage("Unable to reach the Orders service.", true);
   } finally {
@@ -156,16 +126,35 @@ async function createOrder(customerId, status) {
   }
 }
 
-listItemsForm.addEventListener("submit", (event) => {
-  event.preventDefault();
+async function listItems(orderId) {
+  clearItemsTable();
+  setItemsMessage("Loading items…");
+  listItemsButton.disabled = true;
 
-  if (!orderIdInput.checkValidity()) {
-    orderIdInput.reportValidity();
-    return;
+  try {
+    const response = await fetch(`/api/orders/${orderId}/items`, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      setItemsMessage(await errorMessage(response), true);
+      return;
+    }
+
+    const items = await response.json();
+    items.forEach(appendItemRow);
+
+    if (items.length === 0) {
+      setItemsMessage("This order has no items.");
+    } else {
+      setItemsMessage(`${items.length} item(s) found.`);
+    }
+  } catch (_error) {
+    setItemsMessage("Unable to reach the Orders service.", true);
+  } finally {
+    listItemsButton.disabled = false;
   }
-
-  listItems(orderIdInput.value);
-});
+}
 
 createOrderForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -176,6 +165,17 @@ createOrderForm.addEventListener("submit", (event) => {
   }
 
   createOrder(createCustomerIdInput.value, orderStatusInput.value);
+});
+
+listItemsForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  if (!orderIdInput.checkValidity()) {
+    orderIdInput.reportValidity();
+    return;
+  }
+
+  listItems(orderIdInput.value);
 });
 
 loadOrders();
