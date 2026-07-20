@@ -68,6 +68,22 @@ function appendOrderRow(order) {
     row.appendChild(cell);
   });
 
+  const actionsCell = document.createElement("td");
+
+  if (order.status !== "cancelled") {
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "cancel-order-btn";
+    cancelButton.textContent = "Cancel Order";
+    cancelButton.setAttribute("aria-label", `Cancel order ${order.id}`);
+    cancelButton.addEventListener("click", () => {
+      cancelOrder(order.id, row.cells[2], cancelButton);
+    });
+    actionsCell.appendChild(cancelButton);
+  }
+
+  row.appendChild(actionsCell);
+
   ordersTableBody.appendChild(row);
 }
 
@@ -186,6 +202,32 @@ async function createOrder(customerId, status) {
     setOrdersMessage("Unable to reach the Orders service.", true);
   } finally {
     createOrderButton.disabled = false;
+  }
+}
+
+async function cancelOrder(orderId, statusCell, cancelButton) {
+  setOrdersMessage(`Cancelling order ${orderId}…`);
+  cancelButton.disabled = true;
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}/cancel`, {
+      method: "PUT",
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      setOrdersMessage(await errorMessage(response), true);
+      cancelButton.disabled = false;
+      return;
+    }
+
+    const order = await response.json();
+    statusCell.textContent = order.status;
+    cancelButton.remove();
+    setOrdersMessage(`Order ${order.id} cancelled successfully.`);
+  } catch (_error) {
+    setOrdersMessage("Unable to reach the Orders service.", true);
+    cancelButton.disabled = false;
   }
 }
 

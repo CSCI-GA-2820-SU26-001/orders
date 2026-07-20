@@ -104,6 +104,17 @@ button:disabled {
   opacity: 0.65;
 }
 
+.cancel-order-btn {
+  min-height: 2.25rem;
+  padding: 0.45rem 0.75rem;
+  background: #b42318;
+  white-space: nowrap;
+}
+
+.cancel-order-btn:hover {
+  background: #8f1c13;
+}
+
 .message {
   min-height: 1.5rem;
   color: #46546a;
