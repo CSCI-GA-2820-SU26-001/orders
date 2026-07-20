@@ -13,6 +13,13 @@ const readOrderButton = document.querySelector("#read-order-btn");
 const readOrderDetails = document.querySelector("#read-order-details");
 const readOrderMessage = document.querySelector("#read-order-message");
 
+const updateOrderForm = document.querySelector("#update-order-form");
+const updateOrderIdInput = document.querySelector("#update-order-id");
+const updateCustomerIdInput = document.querySelector("#update-customer-id");
+const updateOrderStatusInput = document.querySelector("#update-order-status");
+const updateOrderButton = document.querySelector("#update-order-btn");
+const updateOrderMessage = document.querySelector("#update-order-message");
+
 const listItemsForm = document.querySelector("#list-items-form");
 const orderIdInput = document.querySelector("#order-id");
 const itemsTableBody = document.querySelector("#items-table-body");
@@ -32,6 +39,11 @@ function setItemsMessage(message, isError = false) {
 function setReadOrderMessage(message, isError = false) {
   readOrderMessage.textContent = message;
   readOrderMessage.classList.toggle("error", isError);
+}
+
+function setUpdateOrderMessage(message, isError = false) {
+  updateOrderMessage.textContent = message;
+  updateOrderMessage.classList.toggle("error", isError);
 }
 
 function clearOrdersTable() {
@@ -202,6 +214,39 @@ async function readOrder(orderId) {
   }
 }
 
+async function updateOrder(orderId, customerId, status) {
+  setUpdateOrderMessage("Updating order…");
+  updateOrderButton.disabled = true;
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        customer_id: Number(customerId),
+        status: status,
+      }),
+    });
+
+    const order = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      setUpdateOrderMessage(order.message || `Unable to update order (${response.status}).`, true);
+      return;
+    }
+
+    await loadOrders();
+    setUpdateOrderMessage(`Order ${order.id} updated successfully.`);
+  } catch (_error) {
+    setUpdateOrderMessage("Unable to reach the Orders service.", true);
+  } finally {
+    updateOrderButton.disabled = false;
+  }
+}
+
 async function listItems(orderId) {
   clearItemsTable();
   setItemsMessage("Loading items…");
@@ -252,6 +297,18 @@ readOrderForm.addEventListener("submit", (event) => {
   }
 
   readOrder(readOrderIdInput.value);
+});
+
+updateOrderForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  if (!updateOrderIdInput.checkValidity() || !updateCustomerIdInput.checkValidity()) {
+    updateOrderIdInput.reportValidity();
+    updateCustomerIdInput.reportValidity();
+    return;
+  }
+
+  updateOrder(updateOrderIdInput.value, updateCustomerIdInput.value, updateOrderStatusInput.value);
 });
 
 listItemsForm.addEventListener("submit", (event) => {

@@ -1,35 +1,29 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Orders Admin</title>
-    <link rel="stylesheet" href="/static/css/admin.css">
-    <script src="/static/js/admin.js" defer></script>
-  </head>
-  <body>
-    <main class="container">
-      <header>
-        <p class="eyebrow">Orders service</p>
-        <h1>Admin UI</h1>
-        <p>Create orders, read order details, and inspect the items in a specific order.</p>
-      </header>
 
-      <section class="panel" aria-labelledby="read-order-heading">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orders Admin</title>
+  <link rel="stylesheet" href="/static/css/admin.css">
+  <script src="/static/js/admin.js" defer></script>
+</head>
+
+<body>
+  <main class="container">
+    <header>
+      <p class="eyebrow">Orders service</p>
+      <h1>Admin UI</h1>
+      <p>Create orders, read order details, and inspect the items in a specific order.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="read-order-heading">
       <h2 id="read-order-heading">Read order</h2>
 
       <form id="read-order-form">
         <div class="field">
           <label for="read-order-id">Order ID</label>
-          <input
-            id="read-order-id"
-            name="order_id"
-            type="number"
-            min="1"
-            step="1"
-            required
-            autocomplete="off"
-          >
+          <input id="read-order-id" name="order_id" type="number" min="1" step="1" required autocomplete="off">
         </div>
 
         <button id="read-order-btn" type="submit">Read</button>
@@ -39,92 +33,96 @@
       <div id="read-order-details" class="read-order-details" aria-live="polite"></div>
     </section>
 
-      <section class="panel" aria-labelledby="create-order-heading">
-        <h2 id="create-order-heading">Create order</h2>
+    <section class="panel" aria-labelledby="update-order-heading">
+      <h2 id="update-order-heading">Update order</h2>
 
-        <form id="create-order-form">
-          <div class="field">
-            <label for="create-customer-id">Customer ID</label>
-            <input
-              id="create-customer-id"
-              name="customer_id"
-              type="number"
-              min="1"
-              step="1"
-              required
-              autocomplete="off"
-            >
-          </div>
-
-          <div class="field">
-            <label for="order-status">Status</label>
-            <input
-              id="order-status"
-              name="status"
-              type="text"
-              value="open"
-              autocomplete="off"
-            >
-          </div>
-
-          <button id="create-order-btn" type="submit">Create Order</button>
-        </form>
-
-        <p id="orders-message" class="message" role="status" aria-live="polite"></p>
-
-        <h3>Listing all orders</h3>
-
-        <div class="table-wrap">
-          <table id="orders-table">
-            <caption>Existing orders</caption>
-            <thead>
-              <tr>
-                <th scope="col">Order ID</th>
-                <th scope="col">Customer ID</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody id="orders-table-body"></tbody>
-          </table>
+      <form id="update-order-form">
+        <div class="field">
+          <label for="update-order-id">Order ID</label>
+          <input id="update-order-id" name="order_id" type="number" min="1" step="1" required autocomplete="off">
         </div>
-      </section>
 
-      <section class="panel" aria-labelledby="list-items-heading">
-        <h2 id="list-items-heading">List order items</h2>
-
-        <form id="list-items-form">
-          <div class="field">
-            <label for="order-id">Order ID</label>
-            <input
-              id="order-id"
-              name="order_id"
-              type="number"
-              min="1"
-              step="1"
-              required
-              autocomplete="off"
-            >
-          </div>
-
-          <button id="list-items-btn" type="submit">List Items</button>
-        </form>
-
-        <p id="items-message" class="message" role="status" aria-live="polite"></p>
-
-        <div class="table-wrap">
-          <table id="items-table">
-            <caption>Items in the selected order</caption>
-            <thead>
-              <tr>
-                <th scope="col">Item ID</th>
-                <th scope="col">Name</th>
-                <th scope="col">Quantity</th>
-              </tr>
-            </thead>
-            <tbody id="items-table-body"></tbody>
-          </table>
+        <div class="field">
+          <label for="update-customer-id">Customer ID</label>
+          <input id="update-customer-id" name="customer_id" type="number" min="1" step="1" required autocomplete="off">
         </div>
-      </section>
-    </main>
-  </body>
+
+        <div class="field">
+          <label for="update-order-status">Status</label>
+          <input id="update-order-status" name="status" type="text" required autocomplete="off">
+        </div>
+
+        <button id="update-order-btn" type="submit">Update Order</button>
+      </form>
+
+      <p id="update-order-message" class="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="create-order-heading">
+      <h2 id="create-order-heading">Create order</h2>
+
+      <form id="create-order-form">
+        <div class="field">
+          <label for="create-customer-id">Customer ID</label>
+          <input id="create-customer-id" name="customer_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="order-status">Status</label>
+          <input id="order-status" name="status" type="text" value="open" autocomplete="off">
+        </div>
+
+        <button id="create-order-btn" type="submit">Create Order</button>
+      </form>
+
+      <p id="orders-message" class="message" role="status" aria-live="polite"></p>
+
+      <h3>Listing all orders</h3>
+
+      <div class="table-wrap">
+        <table id="orders-table">
+          <caption>Existing orders</caption>
+          <thead>
+            <tr>
+              <th scope="col">Order ID</th>
+              <th scope="col">Customer ID</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody id="orders-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="list-items-heading">
+      <h2 id="list-items-heading">List order items</h2>
+
+      <form id="list-items-form">
+        <div class="field">
+          <label for="order-id">Order ID</label>
+          <input id="order-id" name="order_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <button id="list-items-btn" type="submit">List Items</button>
+      </form>
+
+      <p id="items-message" class="message" role="status" aria-live="polite"></p>
+
+      <div class="table-wrap">
+        <table id="items-table">
+          <caption>Items in the selected order</caption>
+          <thead>
+            <tr>
+              <th scope="col">Item ID</th>
+              <th scope="col">Name</th>
+              <th scope="col">Quantity</th>
+            </tr>
+          </thead>
+          <tbody id="items-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+
 </html>
