@@ -20,6 +20,13 @@ const updateOrderStatusInput = document.querySelector("#update-order-status");
 const updateOrderButton = document.querySelector("#update-order-btn");
 const updateOrderMessage = document.querySelector("#update-order-message");
 
+const readItemForm = document.querySelector("#read-item-form");
+const readItemOrderIdInput = document.querySelector("#read-item-order-id");
+const readItemItemIdInput = document.querySelector("#read-item-item-id");
+const readItemButton = document.querySelector("#read-item-btn");
+const readItemDetails = document.querySelector("#read-item-details");
+const readItemMessage = document.querySelector("#read-item-message");
+
 const addItemForm = document.querySelector("#add-item-form");
 const addItemOrderIdInput = document.querySelector("#add-item-order-id");
 const addItemProductIdInput = document.querySelector("#add-item-product-id");
@@ -69,6 +76,41 @@ function clearItemsTable() {
 
 function clearReadOrderDetails() {
   readOrderDetails.replaceChildren();
+}
+
+function setReadItemMessage(message, isError = false) {
+  readItemMessage.textContent = message;
+  readItemMessage.classList.toggle("error", isError);
+}
+
+function clearReadItemDetails() {
+  readItemDetails.replaceChildren();
+}
+
+function renderReadItemDetails(item) {
+  clearReadItemDetails();
+
+  const card = document.createElement("div");
+  card.className = "read-order-card";
+
+  const fields = [
+    ["Item ID", item.id],
+    ["Order ID", item.order_id],
+    ["Product ID", item.product_id],
+    ["Quantity", item.quantity],
+    ["Price", item.price],
+  ];
+
+  fields.forEach(([label, value]) => {
+    const paragraph = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = `${label}: `;
+    paragraph.appendChild(strong);
+    paragraph.appendChild(document.createTextNode(value ?? ""));
+    card.appendChild(paragraph);
+  });
+
+  readItemDetails.appendChild(card);
 }
 
 function appendOrderRow(order) {
@@ -302,6 +344,35 @@ async function updateOrder(orderId, customerId, status) {
   }
 }
 
+async function readItem(orderId, itemId) {
+  clearReadItemDetails();
+  setReadItemMessage("Reading item…");
+  readItemButton.disabled = true;
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}/items/${itemId}`, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => ({}));
+      setReadItemMessage(
+        errorPayload.message || `Unable to read item (${response.status}).`,
+        true
+      );
+      return;
+    }
+
+    const item = await response.json();
+    renderReadItemDetails(item);
+    setReadItemMessage(`Item ${item.id} loaded.`);
+  } catch (_error) {
+    setReadItemMessage("Unable to reach the Orders service.", true);
+  } finally {
+    readItemButton.disabled = false;
+  }
+}
+
 async function addItem(orderId, productId, quantity, price) {
   setAddItemMessage("Adding item…");
   addItemButton.disabled = true;
@@ -397,6 +468,18 @@ updateOrderForm.addEventListener("submit", (event) => {
   }
 
   updateOrder(updateOrderIdInput.value, updateCustomerIdInput.value, updateOrderStatusInput.value);
+});
+
+readItemForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  if (!readItemOrderIdInput.checkValidity() || !readItemItemIdInput.checkValidity()) {
+    readItemOrderIdInput.reportValidity();
+    readItemItemIdInput.reportValidity();
+    return;
+  }
+
+  readItem(readItemOrderIdInput.value, readItemItemIdInput.value);
 });
 
 addItemForm.addEventListener("submit", (event) => {

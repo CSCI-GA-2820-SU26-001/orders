@@ -107,6 +107,17 @@ class TestYourResourceService(TestCase):
         self.assertIn(b">Name<", resp.data)
         self.assertIn(b">Quantity<", resp.data)
 
+    def test_admin_ui_read_item_form(self):
+        """It should serve the Admin UI with a form to read a single item"""
+        resp = self.client.get("/admin")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("text/html", resp.content_type)
+        self.assertIn(b'id="read-item-form"', resp.data)
+        self.assertIn(b'id="read-item-order-id"', resp.data)
+        self.assertIn(b'id="read-item-item-id"', resp.data)
+        self.assertIn(b'id="read-item-btn"', resp.data)
+        self.assertIn(b'id="read-item-details"', resp.data)
+
     def test_admin_ui_add_item_form(self):
         """It should serve the Admin UI with a form to add an item to an order"""
         resp = self.client.get("/admin")

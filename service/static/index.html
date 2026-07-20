@@ -95,6 +95,27 @@
       </div>
     </section>
 
+    <section class="panel" aria-labelledby="read-item-heading">
+      <h2 id="read-item-heading">Read order item</h2>
+
+      <form id="read-item-form">
+        <div class="field">
+          <label for="read-item-order-id">Order ID</label>
+          <input id="read-item-order-id" name="order_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="read-item-item-id">Item ID</label>
+          <input id="read-item-item-id" name="item_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <button id="read-item-btn" type="submit">Read Item</button>
+      </form>
+
+      <p id="read-item-message" class="message" role="status" aria-live="polite"></p>
+      <div id="read-item-details" class="read-order-details" aria-live="polite"></div>
+    </section>
+
     <section class="panel" aria-labelledby="add-item-heading">
       <h2 id="add-item-heading">Add item to order</h2>
 
