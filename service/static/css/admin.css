@@ -115,6 +115,22 @@ button:disabled {
   background: #8f1c13;
 }
 
+.order-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.delete-order-btn {
+  min-height: 2.25rem;
+  padding: 0.45rem 0.75rem;
+  background: #b42318;
+  white-space: nowrap;
+}
+
+.delete-order-btn:hover {
+  background: #8f1c13;
+}
+
 .message {
   min-height: 1.5rem;
   color: #46546a;
