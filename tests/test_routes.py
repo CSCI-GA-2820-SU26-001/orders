@@ -102,6 +102,7 @@ class TestYourResourceService(TestCase):
         self.assertIn(b'id="order-id"', resp.data)
         self.assertIn(b'id="list-items-btn"', resp.data)
         self.assertIn(b'id="items-table"', resp.data)
+        self.assertIn(b">Actions<", resp.data)
         self.assertIn(b">Item ID<", resp.data)
         self.assertIn(b">Name<", resp.data)
         self.assertIn(b">Quantity<", resp.data)
