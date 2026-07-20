@@ -127,6 +127,7 @@ function appendOrderRow(order) {
   });
 
   const actionsCell = document.createElement("td");
+  actionsCell.className = "order-actions";
 
   if (order.status !== "cancelled") {
     const cancelButton = document.createElement("button");
@@ -139,6 +140,16 @@ function appendOrderRow(order) {
     });
     actionsCell.appendChild(cancelButton);
   }
+
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "delete-order-btn";
+  deleteButton.textContent = "Delete";
+  deleteButton.setAttribute("aria-label", `Delete order ${order.id}`);
+  deleteButton.addEventListener("click", () => {
+    deleteOrder(order.id, row, deleteButton);
+  });
+  actionsCell.appendChild(deleteButton);
 
   row.appendChild(actionsCell);
 
@@ -268,6 +279,40 @@ async function createOrder(customerId, status) {
     setOrdersMessage("Unable to reach the Orders service.", true);
   } finally {
     createOrderButton.disabled = false;
+  }
+}
+
+async function deleteOrder(orderId, row, deleteButton) {
+  setOrdersMessage(`Deleting order ${orderId}…`);
+
+  const actionButtons = row.querySelectorAll("button");
+  actionButtons.forEach((button) => {
+    button.disabled = true;
+  });
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}`, {
+      method: "DELETE",
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      setOrdersMessage(await errorMessage(response), true);
+      actionButtons.forEach((button) => {
+        button.disabled = false;
+      });
+      return;
+    }
+
+    row.remove();
+    setOrdersMessage(`Order ${orderId} deleted successfully.`);
+  } catch (_error) {
+    setOrdersMessage("Unable to reach the Orders service.", true);
+    actionButtons.forEach((button) => {
+      button.disabled = false;
+    });
+  } finally {
+    deleteButton.disabled = false;
   }
 }
 

@@ -131,6 +131,14 @@ class TestYourResourceService(TestCase):
         self.assertEqual(script.status_code, status.HTTP_200_OK)
         self.assertIn(b'/api/orders?status=', script.data)
 
+    def test_admin_ui_has_delete_order_action(self):
+        """It should provide the JavaScript action for deleting an Order"""
+        resp = self.client.get("/static/js/admin.js")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("javascript", resp.content_type)
+        self.assertIn(b'textContent = "Delete"', resp.data)
+        self.assertIn(b'method: "DELETE"', resp.data)
+
     def test_admin_ui_add_item_form(self):
         """It should serve the Admin UI with a form to add an item to an order"""
         resp = self.client.get("/admin")
