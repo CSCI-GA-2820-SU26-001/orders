@@ -20,6 +20,14 @@ const updateOrderStatusInput = document.querySelector("#update-order-status");
 const updateOrderButton = document.querySelector("#update-order-btn");
 const updateOrderMessage = document.querySelector("#update-order-message");
 
+const addItemForm = document.querySelector("#add-item-form");
+const addItemOrderIdInput = document.querySelector("#add-item-order-id");
+const addItemProductIdInput = document.querySelector("#add-item-product-id");
+const addItemQuantityInput = document.querySelector("#add-item-quantity");
+const addItemPriceInput = document.querySelector("#add-item-price");
+const addItemButton = document.querySelector("#add-item-btn");
+const addItemMessage = document.querySelector("#add-item-message");
+
 const listItemsForm = document.querySelector("#list-items-form");
 const orderIdInput = document.querySelector("#order-id");
 const itemsTableBody = document.querySelector("#items-table-body");
@@ -44,6 +52,11 @@ function setReadOrderMessage(message, isError = false) {
 function setUpdateOrderMessage(message, isError = false) {
   updateOrderMessage.textContent = message;
   updateOrderMessage.classList.toggle("error", isError);
+}
+
+function setAddItemMessage(message, isError = false) {
+  addItemMessage.textContent = message;
+  addItemMessage.classList.toggle("error", isError);
 }
 
 function clearOrdersTable() {
@@ -289,6 +302,39 @@ async function updateOrder(orderId, customerId, status) {
   }
 }
 
+async function addItem(orderId, productId, quantity, price) {
+  setAddItemMessage("Adding item…");
+  addItemButton.disabled = true;
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}/items`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        product_id: Number(productId),
+        quantity: Number(quantity),
+        price: Number(price),
+      }),
+    });
+
+    const item = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      setAddItemMessage(item.message || `Unable to add item (${response.status}).`, true);
+      return;
+    }
+
+    setAddItemMessage(`Item ${item.id} added to order ${orderId} successfully.`);
+  } catch (_error) {
+    setAddItemMessage("Unable to reach the Orders service.", true);
+  } finally {
+    addItemButton.disabled = false;
+  }
+}
+
 async function listItems(orderId) {
   clearItemsTable();
   setItemsMessage("Loading items…");
@@ -351,6 +397,29 @@ updateOrderForm.addEventListener("submit", (event) => {
   }
 
   updateOrder(updateOrderIdInput.value, updateCustomerIdInput.value, updateOrderStatusInput.value);
+});
+
+addItemForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const inputs = [
+    addItemOrderIdInput,
+    addItemProductIdInput,
+    addItemQuantityInput,
+    addItemPriceInput,
+  ];
+
+  if (!inputs.every((input) => input.checkValidity())) {
+    inputs.forEach((input) => input.reportValidity());
+    return;
+  }
+
+  addItem(
+    addItemOrderIdInput.value,
+    addItemProductIdInput.value,
+    addItemQuantityInput.value,
+    addItemPriceInput.value
+  );
 });
 
 listItemsForm.addEventListener("submit", (event) => {
