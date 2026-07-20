@@ -41,6 +41,12 @@ const itemsTableBody = document.querySelector("#items-table-body");
 const itemsMessage = document.querySelector("#items-message");
 const listItemsButton = document.querySelector("#list-items-btn");
 
+const deleteItemForm = document.querySelector("#delete-item-form");
+const deleteItemOrderIdInput = document.querySelector("#delete-item-order-id");
+const deleteItemIdInput = document.querySelector("#delete-item-id");
+const deleteItemButton = document.querySelector("#delete-item-btn");
+const deleteItemMessage = document.querySelector("#delete-item-message");
+
 function setOrdersMessage(message, isError = false) {
   ordersMessage.textContent = message;
   ordersMessage.classList.toggle("error", isError);
@@ -64,6 +70,11 @@ function setUpdateOrderMessage(message, isError = false) {
 function setAddItemMessage(message, isError = false) {
   addItemMessage.textContent = message;
   addItemMessage.classList.toggle("error", isError);
+}
+
+function setDeleteItemMessage(message, isError = false) {
+  deleteItemMessage.textContent = message;
+  deleteItemMessage.classList.toggle("error", isError);
 }
 
 function clearOrdersTable() {
@@ -481,6 +492,32 @@ async function listItems(orderId) {
   }
 }
 
+async function deleteItem(orderId, itemId) {
+  setDeleteItemMessage("Deleting item…");
+  deleteItemButton.disabled = true;
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}/items/${itemId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok && response.status !== 204) {
+      setDeleteItemMessage(await errorMessage(response), true);
+      return;
+    }
+
+    setDeleteItemMessage(`Item ${itemId} deleted successfully.`);
+
+    if (orderIdInput.value === String(orderId)) {
+      await listItems(orderId);
+    }
+  } catch (_error) {
+    setDeleteItemMessage("Unable to reach the Orders service.", true);
+  } finally {
+    deleteItemButton.disabled = false;
+  }
+}
+
 createOrderForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -559,6 +596,18 @@ listItemsForm.addEventListener("submit", (event) => {
   }
 
   listItems(orderIdInput.value);
+});
+
+deleteItemForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  if (!deleteItemOrderIdInput.checkValidity() || !deleteItemIdInput.checkValidity()) {
+    deleteItemOrderIdInput.reportValidity();
+    deleteItemIdInput.reportValidity();
+    return;
+  }
+
+  deleteItem(deleteItemOrderIdInput.value, deleteItemIdInput.value);
 });
 
 loadOrders();
