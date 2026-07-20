@@ -116,6 +116,36 @@
       <div id="read-item-details" class="read-order-details" aria-live="polite"></div>
     </section>
 
+    <section class="panel" aria-labelledby="add-item-heading">
+      <h2 id="add-item-heading">Add item to order</h2>
+
+      <form id="add-item-form">
+        <div class="field">
+          <label for="add-item-order-id">Order ID</label>
+          <input id="add-item-order-id" name="order_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="add-item-product-id">Product ID</label>
+          <input id="add-item-product-id" name="product_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="add-item-quantity">Quantity</label>
+          <input id="add-item-quantity" name="quantity" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="add-item-price">Price</label>
+          <input id="add-item-price" name="price" type="number" min="0" step="0.01" required autocomplete="off">
+        </div>
+
+        <button id="add-item-btn" type="submit">Add Item</button>
+      </form>
+
+      <p id="add-item-message" class="message" role="status" aria-live="polite"></p>
+    </section>
+
     <section class="panel" aria-labelledby="list-items-heading">
       <h2 id="list-items-heading">List order items</h2>
 
