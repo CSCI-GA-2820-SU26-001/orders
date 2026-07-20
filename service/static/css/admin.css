@@ -69,19 +69,22 @@ label {
 }
 
 input,
+select,
 button {
   min-height: 2.75rem;
   border-radius: 0.4rem;
   font: inherit;
 }
 
-input {
+input,
+select {
   width: 100%;
   padding: 0.65rem 0.75rem;
   border: 1px solid #aebbd0;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: #3157c8;
   outline: 3px solid rgb(49 87 200 / 18%);
 }

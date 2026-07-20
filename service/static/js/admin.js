@@ -6,6 +6,9 @@ const orderStatusInput = document.querySelector("#order-status");
 const createOrderButton = document.querySelector("#create-order-btn");
 const ordersTableBody = document.querySelector("#orders-table-body");
 const ordersMessage = document.querySelector("#orders-message");
+const searchOrdersForm = document.querySelector("#search-orders-form");
+const searchOrderStatusInput = document.querySelector("#search-order-status");
+const searchOrdersButton = document.querySelector("#search-orders-btn");
 
 const readOrderForm = document.querySelector("#read-order-form");
 const readOrderIdInput = document.querySelector("#read-order-id");
@@ -211,12 +214,16 @@ async function errorMessage(response) {
   }
 }
 
-async function loadOrders() {
+async function loadOrders(status = searchOrderStatusInput.value) {
   clearOrdersTable();
-  setOrdersMessage("Loading orders…");
+  setOrdersMessage("Searching orders…");
+  searchOrdersButton.disabled = true;
 
   try {
-    const response = await fetch("/api/orders", {
+    const url = status
+      ? `/api/orders?status=${encodeURIComponent(status)}`
+      : "/api/orders";
+    const response = await fetch(url, {
       headers: { Accept: "application/json" },
     });
 
@@ -228,13 +235,17 @@ async function loadOrders() {
     const orders = await response.json();
     orders.forEach(appendOrderRow);
 
-    if (orders.length === 0) {
+    if (orders.length === 0 && status) {
+      setOrdersMessage(`No orders found with status "${status}".`);
+    } else if (orders.length === 0) {
       setOrdersMessage("No orders found.");
     } else {
       setOrdersMessage(`${orders.length} order(s) loaded.`);
     }
   } catch (_error) {
     setOrdersMessage("Unable to reach the Orders service.", true);
+  } finally {
+    searchOrdersButton.disabled = false;
   }
 }
 
@@ -490,6 +501,11 @@ createOrderForm.addEventListener("submit", (event) => {
   }
 
   createOrder(createCustomerIdInput.value, orderStatusInput.value);
+});
+
+searchOrdersForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  loadOrders(searchOrderStatusInput.value);
 });
 
 readOrderForm.addEventListener("submit", (event) => {

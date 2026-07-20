@@ -118,6 +118,19 @@ class TestYourResourceService(TestCase):
         self.assertIn(b'id="read-item-btn"', resp.data)
         self.assertIn(b'id="read-item-details"', resp.data)
 
+    def test_admin_ui_has_status_search(self):
+        """It should provide controls for querying Orders by status"""
+        resp = self.client.get("/admin")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn(b'id="search-orders-form"', resp.data)
+        self.assertIn(b'id="search-order-status"', resp.data)
+        self.assertIn(b'<option value="">All statuses</option>', resp.data)
+        self.assertIn(b'id="search-orders-btn"', resp.data)
+
+        script = self.client.get("/static/js/admin.js")
+        self.assertEqual(script.status_code, status.HTTP_200_OK)
+        self.assertIn(b'/api/orders?status=', script.data)
+
     def test_admin_ui_has_delete_order_action(self):
         """It should provide the JavaScript action for deleting an Order"""
         resp = self.client.get("/static/js/admin.js")
