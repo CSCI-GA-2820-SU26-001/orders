@@ -192,6 +192,26 @@
         </table>
       </div>
     </section>
+
+    <section class="panel" aria-labelledby="delete-item-heading">
+      <h2 id="delete-item-heading">Delete item</h2>
+
+      <form id="delete-item-form">
+        <div class="field">
+          <label for="delete-item-order-id">Order ID</label>
+          <input id="delete-item-order-id" name="order_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="delete-item-id">Item ID</label>
+          <input id="delete-item-id" name="item_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <button id="delete-item-btn" type="submit">Delete Item</button>
+      </form>
+
+      <p id="delete-item-message" class="message" role="status" aria-live="polite"></p>
+    </section>
   </main>
 </body>
 
