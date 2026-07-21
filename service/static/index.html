@@ -183,14 +183,44 @@
           <caption>Items in the selected order</caption>
           <thead>
             <tr>
-              <th scope="col">Item ID</th>
-              <th scope="col">Name</th>
+              <th scope="col">Product ID</th>
               <th scope="col">Quantity</th>
+              <th scope="col">Price</th>
             </tr>
           </thead>
           <tbody id="items-table-body"></tbody>
         </table>
       </div>
+    </section>
+
+        <section class="panel" aria-labelledby="update-item-heading">
+      <h2 id="update-item-heading">Update item</h2>
+
+      <form id="update-item-form">
+        <div class="field">
+          <label for="update-item-order-id">Order ID</label>
+          <input id="update-item-order-id" name="order_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="update-item-product-id">Product ID</label>
+          <input id="update-item-product-id" name="product_id" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="update-item-quantity">Quantity</label>
+          <input id="update-item-quantity" name="quantity" type="number" min="1" step="1" required autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="update-item-price">Price</label>
+          <input id="update-item-price" name="price" type="number" min="0" step="0.01" required autocomplete="off">
+        </div>
+
+        <button id="update-item-btn" type="submit">Update Item</button>
+      </form>
+
+      <p id="update-item-message" class="message" role="status" aria-live="polite"></p>
     </section>
 
     <section class="panel" aria-labelledby="delete-item-heading">
@@ -203,7 +233,7 @@
         </div>
 
         <div class="field">
-          <label for="delete-item-id">Item ID</label>
+          <label for="delete-item-id">Product ID</label>
           <input id="delete-item-id" name="item_id" type="number" min="1" step="1" required autocomplete="off">
         </div>
 
