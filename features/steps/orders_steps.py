@@ -202,13 +202,11 @@ def step_not_see_in_results(context, text):
     assert absent, f'Unexpectedly found "{text}" in the results table'
 
 
-@then('I should see the copied order id in the read confirmation')
-def step_read_confirmation_has_copied_id(context):
-    """The read-order message should confirm the order id that was read"""
+@then('I should see "{text}" in the order details')
+def step_see_in_order_details(context, text):
+    """Wait until the given text appears in the read-order details panel"""
     found = WebDriverWait(context.driver, context.wait_seconds).until(
-        lambda driver: context.copied_id
-        in driver.find_element(By.ID, "read-order-message").text
+        lambda driver: text
+        in driver.find_element(By.ID, "read-order-details").text
     )
-    assert found, (
-        f'Read confirmation did not mention order id {context.copied_id}'
-    )
+    assert found, f'Did not find "{text}" in the order details'

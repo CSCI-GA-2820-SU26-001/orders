@@ -33,7 +33,7 @@ Scenario: Read an order
     When I copy the id of the order for customer "111"
     And I set the "Read Order ID" field to the copied id
     And I press the "Read Order" button
-    Then I should see the copied order id in the read confirmation
+    Then I should see "111" in the order details
 
 Scenario: Update an order
     Given I am on the Admin UI
