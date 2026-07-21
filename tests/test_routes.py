@@ -103,8 +103,7 @@ class TestYourResourceService(TestCase):
         self.assertIn(b'id="list-items-btn"', resp.data)
         self.assertIn(b'id="items-table"', resp.data)
         self.assertIn(b">Actions<", resp.data)
-        self.assertIn(b">Item ID<", resp.data)
-        self.assertIn(b">Name<", resp.data)
+        self.assertIn(b">Product ID<", resp.data)
         self.assertIn(b">Quantity<", resp.data)
 
     def test_admin_ui_read_item_form(self):

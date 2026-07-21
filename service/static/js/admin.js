@@ -44,6 +44,15 @@ const itemsTableBody = document.querySelector("#items-table-body");
 const itemsMessage = document.querySelector("#items-message");
 const listItemsButton = document.querySelector("#list-items-btn");
 
+const updateItemForm = document.querySelector("#update-item-form");
+const updateItemOrderIdInput = document.querySelector("#update-item-order-id");
+const updateItemProductIdInput = document.querySelector("#update-item-product-id");
+const updateItemQuantityInput = document.querySelector("#update-item-quantity");
+const updateItemPriceInput = document.querySelector("#update-item-price");
+const updateItemButton = document.querySelector("#update-item-btn");
+const updateItemMessage = document.querySelector("#update-item-message");
+
+
 const deleteItemForm = document.querySelector("#delete-item-form");
 const deleteItemOrderIdInput = document.querySelector("#delete-item-order-id");
 const deleteItemIdInput = document.querySelector("#delete-item-id");
@@ -73,6 +82,11 @@ function setUpdateOrderMessage(message, isError = false) {
 function setAddItemMessage(message, isError = false) {
   addItemMessage.textContent = message;
   addItemMessage.classList.toggle("error", isError);
+}
+
+function setUpdateItemMessage(message, isError = false) {
+  updateItemMessage.textContent = message;
+  updateItemMessage.classList.toggle("error", isError);
 }
 
 function setDeleteItemMessage(message, isError = false) {
@@ -169,7 +183,7 @@ function appendOrderRow(order) {
 
 function appendItemRow(item) {
   const row = document.createElement("tr");
-  const values = [item.id, item.name ?? "", item.quantity ?? ""];
+  const values = [item.product_id, item.quantity, item.price];
 
   values.forEach((value) => {
     const cell = document.createElement("td");
@@ -503,21 +517,100 @@ async function listItems(orderId) {
   }
 }
 
-async function deleteItem(orderId, itemId) {
-  setDeleteItemMessage("Deleting item…");
+async function updateItem(orderId, productId, quantity, price) {
+  setUpdateItemMessage("Updating item…");
+  updateItemButton.disabled = true;
+
+  try {
+    const listResponse = await fetch(`/api/orders/${orderId}/items`, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (!listResponse.ok) {
+      setUpdateItemMessage("Unable to fetch items from order.", true);
+      return;
+    }
+
+    const items = await listResponse.json();
+    const itemToUpdate = items.find((item) => item.product_id === Number(productId));
+
+    if (!itemToUpdate) {
+      setUpdateItemMessage("Item with that product ID not found in this order.", true);
+      return;
+    }
+
+    const response = await fetch(`/api/orders/${orderId}/items/${itemToUpdate.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        product_id: Number(productId),
+        quantity: Number(quantity),
+        price: Number(price),
+      }),
+    });
+
+    const item = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      setUpdateItemMessage(item.message || `Unable to update item (${response.status}).`, true);
+      return;
+    }
+
+    await listItems(orderId);
+    setUpdateItemMessage(`Item updated successfully.`);
+  } catch (_error) {
+    setUpdateItemMessage("Unable to reach the Orders service.", true);
+  } finally {
+    updateItemButton.disabled = false;
+  }
+}
+
+async function deleteItem(orderId, productId) {
+  setDeleteItemMessage("Deleting item...");
   deleteItemButton.disabled = true;
 
   try {
-    const response = await fetch(`/api/orders/${orderId}/items/${itemId}`, {
-      method: "DELETE",
+    const listResponse = await fetch(`/api/orders/${orderId}/items`, {
+      headers: { Accept: "application/json" },
     });
+
+    if (!listResponse.ok) {
+      setDeleteItemMessage("Unable to fetch items from order.", true);
+      return;
+    }
+
+    const items = await listResponse.json();
+
+    const itemToDelete = items.find(
+      (item) => item.product_id === Number(productId)
+    );
+
+    if (!itemToDelete) {
+      setDeleteItemMessage(
+        "Item with that product ID not found in this order.",
+        true
+      );
+      return;
+    }
+
+    const response = await fetch(
+      `/api/orders/${orderId}/items/${itemToDelete.id}`,
+      {
+        method: "DELETE",
+      }
+    );
 
     if (!response.ok && response.status !== 204) {
       setDeleteItemMessage(await errorMessage(response), true);
       return;
     }
 
-    setDeleteItemMessage(`Item ${itemId} deleted successfully.`);
+    setDeleteItemMessage(
+      `Product ${productId} deleted successfully.`
+    );
 
     if (orderIdInput.value === String(orderId)) {
       await listItems(orderId);
@@ -624,6 +717,29 @@ deleteItemForm.addEventListener("submit", (event) => {
   }
 
   deleteItem(deleteItemOrderIdInput.value, deleteItemIdInput.value);
+});
+
+updateItemForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const inputs = [
+    updateItemOrderIdInput,
+    updateItemProductIdInput,
+    updateItemQuantityInput,
+    updateItemPriceInput,
+  ];
+
+  if (!inputs.every((input) => input.checkValidity())) {
+    inputs.forEach((input) => input.reportValidity());
+    return;
+  }
+
+  updateItem(
+    updateItemOrderIdInput.value,
+    updateItemProductIdInput.value,
+    updateItemQuantityInput.value,
+    updateItemPriceInput.value
+  );
 });
 
 loadOrders();
