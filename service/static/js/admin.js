@@ -384,6 +384,7 @@ async function readOrder(orderId) {
     }
 
     const order = await response.json();
+    renderReadOrderDetails(order);
     setReadOrderMessage(`Order ${order.id} loaded.`);
   } catch (_error) {
     setReadOrderMessage("Unable to reach the Orders service.", true);

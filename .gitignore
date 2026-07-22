@@ -102,3 +102,6 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# BDD debug screenshot
+failed_step.png
