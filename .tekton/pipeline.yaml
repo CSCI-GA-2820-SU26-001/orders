@@ -1,0 +1,48 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: orders-pipeline
+spec:
+
+  workspaces:
+    - name: shared-workspace
+
+  tasks:
+
+    - name: clone
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+
+    - name: lint
+      runAfter:
+        - clone
+      taskRef:
+        name: lint-task
+
+    - name: test
+      runAfter:
+        - clone
+      taskRef:
+        name: test-task
+
+    - name: build
+      runAfter:
+        - lint
+        - test
+      taskRef:
+        name: build-task
+
+    - name: deploy
+      runAfter:
+        - build
+      taskRef:
+        name: deploy-task
+
+    - name: bdd
+      runAfter:
+        - deploy
+      taskRef:
+        name: bdd-task
