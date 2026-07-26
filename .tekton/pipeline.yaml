@@ -3,15 +3,25 @@ kind: Pipeline
 metadata:
   name: orders-pipeline
 spec:
+  params:
+    - name: git-url
+      description: The URL of the repo to clone
+    - name: git-revision
+      description: The branch or ref to check out
+      default: master
 
   workspaces:
     - name: shared-workspace
 
   tasks:
-
     - name: clone
       taskRef:
         name: git-clone
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-revision)
       workspaces:
         - name: output
           workspace: shared-workspace
