@@ -1,0 +1,58 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: lint-task
+spec:
+  steps:
+    - name: lint
+      image: alpine
+      script: |
+        echo "placeholder lint"
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: test-task
+spec:
+  steps:
+    - name: test
+      image: alpine
+      script: |
+        echo "placeholder test"
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: build-task
+spec:
+  steps:
+    - name: build
+      image: alpine
+      script: |
+        echo "placeholder build"
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: deploy-task
+spec:
+  steps:
+    - name: deploy
+      image: alpine
+      script: |
+        echo "placeholder deploy"
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: bdd-task
+spec:
+  steps:
+    - name: bdd
+      image: alpine
+      script: |
+        echo "placeholder bdd"
