@@ -1,0 +1,12 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: orders-event-listener
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - name: orders-push-trigger
+      bindings:
+        - ref: orders-push-binding
+      template:
+        ref: orders-push-template
