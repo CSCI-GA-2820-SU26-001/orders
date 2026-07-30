@@ -51,8 +51,31 @@ kind: Task
 metadata:
   name: bdd-task
 spec:
+  workspaces:
+    - name: source
+  params:
+    - name: base-url
+      description: Base URL of the deployed service to run behave against
+      default: http://orders:8080
   steps:
     - name: bdd
-      image: alpine
+      image: quay.io/rofrano/pipeline-selenium:sp26
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: BASE_URL
+          value: $(params.base-url)
       script: |
-        echo "placeholder bdd"
+        #!/bin/bash
+        set -e
+        echo "Installing test dependencies..."
+        python -m pip install --upgrade pip pipenv
+        pipenv install --system --dev
+
+        echo "Waiting for the service at ${BASE_URL} ..."
+        until curl -sf "${BASE_URL}/health"; do
+          echo "  service not ready yet, retrying in 5s"
+          sleep 5
+        done
+
+        echo "Running BDD scenarios against ${BASE_URL} ..."
+        behave

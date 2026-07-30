@@ -9,6 +9,9 @@ spec:
     - name: git-revision
       description: The branch or ref to check out
       default: master
+    - name: base-url
+      description: Base URL of the deployed service for the BDD task
+      default: http://orders:8080
 
   workspaces:
     - name: shared-workspace
@@ -56,3 +59,9 @@ spec:
         - deploy
       taskRef:
         name: bdd-task
+      params:
+        - name: base-url
+          value: $(params.base-url)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
