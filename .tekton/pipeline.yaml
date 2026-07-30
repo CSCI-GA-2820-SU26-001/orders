@@ -43,6 +43,9 @@ spec:
         - clone
       taskRef:
         name: test-task
+      workspaces:
+        - name: source
+          workspace: shared-workspace
 
     - name: build
       runAfter:
