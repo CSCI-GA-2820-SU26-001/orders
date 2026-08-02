@@ -12,6 +12,15 @@ spec:
     - name: base-url
       description: Base URL of the deployed service for the BDD task
       default: http://orders:8080
+    - name: image-registry
+      description: Registry and namespace where the image will be pushed
+      default: image-registry.openshift-image-registry.svc:5000/orders
+    - name: image-name
+      description: Name of the container image to build
+      default: orders
+    - name: image-tag
+      description: Tag to apply to the built image
+      default: latest
 
   workspaces:
     - name: shared-workspace
@@ -53,6 +62,12 @@ spec:
         - test
       taskRef:
         name: build-task
+      params:
+        - name: image
+          value: $(params.image-registry)/$(params.image-name):$(params.image-tag)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
 
     - name: deploy
       runAfter:

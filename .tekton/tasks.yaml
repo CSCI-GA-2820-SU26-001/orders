@@ -51,11 +51,67 @@ kind: Task
 metadata:
   name: build-task
 spec:
+  workspaces:
+    - name: source
+  params:
+    - name: image
+      description: Fully qualified image name to build and push
+      type: string
+    - name: dockerfile
+      description: Path to the Dockerfile relative to the source workspace
+      type: string
+      default: ./Dockerfile
+    - name: context
+      description: Build context path relative to the source workspace
+      type: string
+      default: .
+    - name: tls-verify
+      description: Verify TLS when pushing to the registry
+      type: string
+      default: "false"
+  results:
+    - name: image-url
+      description: Fully qualified image name pushed by this task
+    - name: image-digest
+      description: Digest returned by the registry after the image is pushed
   steps:
-    - name: build
-      image: alpine
+    - name: build-and-push
+      image: quay.io/buildah/stable:latest
+      workingDir: $(workspaces.source.path)
+      securityContext:
+        capabilities:
+          add:
+            - SETFCAP
+      env:
+        - name: STORAGE_DRIVER
+          value: vfs
+        - name: BUILDAH_ISOLATION
+          value: chroot
       script: |
-        echo "placeholder build"
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        IMAGE="$(params.image)"
+        DIGEST_FILE="$(mktemp)"
+
+        echo "Building ${IMAGE} from $(params.dockerfile)..."
+        buildah bud \
+          --storage-driver="${STORAGE_DRIVER}" \
+          --format=docker \
+          --file "$(params.dockerfile)" \
+          --tag "${IMAGE}" \
+          "$(params.context)"
+
+        echo "Pushing ${IMAGE}..."
+        buildah push \
+          --storage-driver="${STORAGE_DRIVER}" \
+          --tls-verify="$(params.tls-verify)" \
+          --digestfile "${DIGEST_FILE}" \
+          "${IMAGE}" \
+          "docker://${IMAGE}"
+
+        printf "%s" "${IMAGE}" > "$(results.image-url.path)"
+        cat "${DIGEST_FILE}" > "$(results.image-digest.path)"
 
 ---
 apiVersion: tekton.dev/v1
