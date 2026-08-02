@@ -1,161 +1,247 @@
-apiVersion: tekton.dev/v1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: lint-task
+  name: pylint
+  labels:
+    app.kubernetes.io/version: "0.4"
+  annotations:
+    tekton.dev/categories: Code Quality
+    tekton.dev/pipelines.minVersion: "0.17.0"
+    tekton.dev/tags: python, pylint, poetry
+    tekton.dev/displayName: "pylint"
+    tekton.dev/platforms: "linux/amd64,linux/s390x,linux/ppc64le"
 spec:
   workspaces:
     - name: source
-  steps:
-    - name: lint
-      image: python:3.12-slim
-      workingDir: $(workspaces.source.path)
-      script: |
-        #!/bin/bash
-        set -e
-        echo "Installing dependencies..."
-        python -m pip install --upgrade pip pipenv
-        pipenv install --system --dev
-
-        echo "Running flake8..."
-        flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
-
-        echo "Running pylint..."
-        pylint service tests --max-line-length=127
-
----
-apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: test-task
-spec:
-  workspaces:
-    - name: source
-  steps:
-    - name: test
-      image: python:3.12-slim
-      workingDir: $(workspaces.source.path)
-      script: |
-        #!/bin/bash
-        set -e
-        echo "Installing dependencies..."
-        python -m pip install --upgrade pip pipenv
-        pipenv install --system --dev
-
-        echo "Running tests with coverage..."
-        pytest --cov=service --cov-report=term-missing --cov-fail-under=95
-
----
-apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: build-task
-spec:
-  workspaces:
-    - name: source
+      description: The workspace with the source code.
+  description: >-
+    Use to run pylint on the provided input source.
+    If Poetry or Pipenv is being used it will detect
+    the poetry.lock and Pipfile file and install using them.
   params:
     - name: image
-      description: Fully qualified image name to build and push
+      description: The container image with pylint
+      default: quay.io/rofrano/python:3.12-slim
+    - name: path
+      description: The path to the module which should be analyzed by pylint
+      default: "."
       type: string
-    - name: dockerfile
-      description: Path to the Dockerfile relative to the source workspace
-      type: string
-      default: ./Dockerfile
-    - name: context
-      description: Build context path relative to the source workspace
-      type: string
-      default: .
-    - name: tls-verify
-      description: Verify TLS when pushing to the registry
-      type: string
-      default: "false"
-  results:
-    - name: image-url
-      description: Fully qualified image name pushed by this task
-    - name: image-digest
-      description: Digest returned by the registry after the image is pushed
+    - name: args
+      description: The arguments to pass to the pylint CLI.
+      type: array
+      default: []
+    - name: requirements-file
+      description: The name of the requirements file inside the source location
+      default: "requirements.txt"
   steps:
-    - name: build-and-push
-      image: quay.io/buildah/stable:latest
+    - name: pylint
+      image: $(params.image)
       workingDir: $(workspaces.source.path)
-      securityContext:
-        capabilities:
-          add:
-            - SETFCAP
-      env:
-        - name: STORAGE_DRIVER
-          value: vfs
-        - name: BUILDAH_ISOLATION
-          value: chroot
       script: |
-        #!/usr/bin/env bash
-        set -euo pipefail
+        #!/bin/bash
+        set -e
+        export PATH=$PATH:$HOME/.local/bin:
 
-        IMAGE="$(params.image)"
-        DIGEST_FILE="$(mktemp)"
+        echo "***** Installing dependencies *****"
+        if [ -e "poetry.lock" ]; then
+          echo "Found poetry.lock file: using poetry ..."
+          python -m pip install --upgrade pip poetry
+          poetry config virtualenvs.create false
+          poetry install
+        elif [ -e "Pipfile" ]; then
+          echo "Found Pipfile file: using pipenv ..."
+          python -m pip install --upgrade pip pipenv
+          pipenv install --system --dev
+        elif [ -n "$(params.requirements-file)" ] && [ -e "$(params.requirements-file)" ]; then
+          python -m pip install --user -r "$(params.requirements-file)"
+        fi
 
-        echo "Building ${IMAGE} from $(params.dockerfile)..."
-        buildah bud \
-          --storage-driver="${STORAGE_DRIVER}" \
-          --format=docker \
-          --file "$(params.dockerfile)" \
-          --tag "${IMAGE}" \
-          "$(params.context)"
+        python -m pip install pylint
 
-        echo "Pushing ${IMAGE}..."
-        buildah push \
-          --storage-driver="${STORAGE_DRIVER}" \
-          --tls-verify="$(params.tls-verify)" \
-          --digestfile "${DIGEST_FILE}" \
-          "${IMAGE}" \
-          "docker://${IMAGE}"
-
-        printf "%s" "${IMAGE}" > "$(results.image-url.path)"
-        cat "${DIGEST_FILE}" > "$(results.image-digest.path)"
+        echo "***** Running Linting *****"
+        pylint $@ "$(params.path)"
+      args:
+        - "$(params.args)"
 
 ---
-apiVersion: tekton.dev/v1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: deploy-task
-spec:
-  steps:
-    - name: deploy
-      image: alpine
-      script: |
-        echo "placeholder deploy"
-
----
-apiVersion: tekton.dev/v1
-kind: Task
-metadata:
-  name: bdd-task
+  name: pytest-env
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/categories: Testing
+    tekton.dev/pipelines.minVersion: "0.17.0"
+    tekton.dev/tags: python, pytest
+    tekton.dev/displayName: "pytest tests"
+    tekton.dev/platforms: "linux/amd64,linux/s390x,linux/ppc64le"
 spec:
   workspaces:
     - name: source
+  description: >-
+    This task can be used to perform unit tests with pytest.
+    It supports both requirements.txt, Pipfile, & poetry.lock files.
+  params:
+    - name: pytest-args
+      description: The arguments to pass to the pytest CLI.
+      type: array
+      default: []
+    - name: secret-name
+      description: The name of the secret containing a database uri key
+      type: string
+      default: "postgres-secret"
+    - name: secret-key
+      description: The name of the key that contains the database uri
+      type: string
+      default: "DATABASE_URI"
+  steps:
+    - name: pytest
+      image: quay.io/rofrano/python:3.12-slim
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: DATABASE_URI
+          valueFrom:
+            secretKeyRef:
+              name: $(params.secret-name)
+              key: $(params.secret-key)
+      script: |
+        #!/bin/bash
+        set -e
+        export PATH=$PATH:$HOME/.local/bin:
+
+        echo "***** Installing dependencies *****"
+        if [ -e "poetry.lock" ]; then
+          echo "Found poetry.lock file: using poetry ..."
+          python -m pip install --upgrade pip poetry
+          poetry config virtualenvs.create false
+          poetry install
+        elif [ -e "Pipfile" ]; then
+          echo "Found Pipfile file: using pipenv ..."
+          python -m pip install --upgrade pip pipenv
+          pipenv install --system --dev
+        elif [ -e "requirements.txt" ]; then
+          python -m pip install --user -r requirements.txt
+        fi
+
+        python -m pip install pytest
+
+        echo "***** Running Tests *****"
+        pytest --version
+        pytest
+      args:
+        - "$(params.pytest-args)"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy-image
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/categories: Deployment
+    tekton.dev/pipelines.minVersion: "0.17.0"
+    tekton.dev/tags: openshift, deploy
+    tekton.dev/displayName: "deploy image"
+    tekton.dev/platforms: "linux/amd64"
+spec:
+  workspaces:
+    - name: source
+  description: >-
+    This task will update the deployment.yaml with the latest image name
+    and then apply that yaml file and it's service file.
+  params:
+    - name: image-name
+      description: The fully qualified name of the new image to deploy
+      type: string
+    - name: manifest-dir
+      description: The directory in source that contains yaml manifests
+      type: string
+      default: "k8s"
+  steps:
+    - name: deploy
+      image: quay.io/openshift/origin-cli:latest
+      workingDir: /workspace/source
+      command: ["/bin/bash", "-c"]
+      args:
+        - |-
+          #!/bin/bash
+          set -e
+
+          echo Applying manifests in $(inputs.params.manifest-dir) directory
+
+          echo "Installing YQ..."
+          wget -qO /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod a+x /usr/bin/yq
+
+          echo "Deploying $(inputs.params.image-name) ..."
+          yq -e -i '.spec.template.spec.containers[0].image="$(inputs.params.image-name)"' $(inputs.params.manifest-dir)/deployment.yaml
+          cat $(inputs.params.manifest-dir)/deployment.yaml
+
+          echo "OC APPLY..."
+          oc apply -f $(inputs.params.manifest-dir)/deployment.yaml
+          oc apply -f $(inputs.params.manifest-dir)/service.yaml
+
+          sleep 3
+          echo "Pods:"
+          oc get pods
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: behave
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/categories: Testing
+    tekton.dev/pipelines.minVersion: "0.17.0"
+    tekton.dev/tags: python, bdd, behave
+    tekton.dev/displayName: "bdd tests"
+    tekton.dev/platforms: "linux/amd64"
+spec:
+  workspaces:
+    - name: source
+  description: >-
+    This task can be used to perform bdd tests with behave.
   params:
     - name: base-url
-      description: Base URL of the deployed service to run behave against
-      default: http://orders:8080
+      description: The url of the application to test
+      type: string
+    - name: wait-seconds
+      description: The number of seconds to wait for a reply
+      type: string
+      default: "60"
+    - name: driver
+      description: The web driver to use (chrome or firefox)
+      type: string
+      default: "chrome"
   steps:
-    - name: bdd
-      image: quay.io/rofrano/pipeline-selenium:sp26
+    - name: behave
+      image: quay.io/rofrano/pipeline-selenium
       workingDir: $(workspaces.source.path)
       env:
         - name: BASE_URL
           value: $(params.base-url)
+        - name: WAIT_SECONDS
+          value: $(params.wait-seconds)
+        - name: DRIVER
+          value: $(params.driver)
       script: |
         #!/bin/bash
         set -e
-        echo "Installing test dependencies..."
-        python -m pip install --upgrade pip pipenv
-        pipenv install --system --dev
+        export PATH=$PATH:$HOME/.local/bin:
 
-        echo "Waiting for the service at ${BASE_URL} ..."
-        until curl -sf "${BASE_URL}/health"; do
-          echo "  service not ready yet, retrying in 5s"
-          sleep 5
-        done
+        echo "***** Installing dependencies *****"
+        if [ -e "poetry.lock" ]; then
+          python -m pip install poetry poetry-plugin-export
+          poetry export --with=dev -f requirements.txt --output requirements.txt
+        elif [ -e "Pipfile" ]; then
+          python -m pip install --upgrade pip pipenv
+          pipenv requirements --dev > requirements.txt
+        fi
+        python -m pip install --user -r requirements.txt
 
-        echo "Running BDD scenarios against ${BASE_URL} ..."
+        echo "***** Running Tests *****"
         behave
