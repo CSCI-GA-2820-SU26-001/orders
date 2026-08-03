@@ -13,7 +13,7 @@ spec:
         generateName: orders-pipeline-run-
       spec:
         pipelineRef:
-          name: orders-pipeline
+          name: cd-pipeline
         workspaces:
           - name: shared-workspace
             persistentVolumeClaim:

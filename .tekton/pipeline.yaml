@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  name: orders-pipeline
+  name: cd-pipeline
 spec:
   params:
     - name: git-url
@@ -9,18 +9,15 @@ spec:
     - name: git-revision
       description: The branch or ref to check out
       default: master
+    - name: image-name
+      description: The fully qualified name of the image to build and deploy
+      default: image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/orders:latest
+    - name: manifest-dir
+      description: The directory containing k8s manifests
+      default: "k8s"
     - name: base-url
       description: Base URL of the deployed service for the BDD task
       default: http://orders:8080
-    - name: image-registry
-      description: Registry and namespace where the image will be pushed
-      default: image-registry.openshift-image-registry.svc:5000/orders
-    - name: image-name
-      description: Name of the container image to build
-      default: orders
-    - name: image-tag
-      description: Tag to apply to the built image
-      default: latest
 
   workspaces:
     - name: shared-workspace
@@ -42,7 +39,7 @@ spec:
       runAfter:
         - clone
       taskRef:
-        name: lint-task
+        name: pylint
       workspaces:
         - name: source
           workspace: shared-workspace
@@ -51,7 +48,12 @@ spec:
       runAfter:
         - clone
       taskRef:
-        name: test-task
+        name: pytest-env
+      params:
+        - name: secret-name
+          value: postgres-secret
+        - name: secret-key
+          value: DATABASE_URI
       workspaces:
         - name: source
           workspace: shared-workspace
@@ -61,10 +63,17 @@ spec:
         - lint
         - test
       taskRef:
-        name: build-task
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah
+          - name: namespace
+            value: openshift-pipelines
       params:
-        - name: image
-          value: $(params.image-registry)/$(params.image-name):$(params.image-tag)
+        - name: IMAGE
+          value: $(params.image-name)
       workspaces:
         - name: source
           workspace: shared-workspace
@@ -73,13 +82,21 @@ spec:
       runAfter:
         - build
       taskRef:
-        name: deploy-task
+        name: deploy-image
+      params:
+        - name: image-name
+          value: $(params.image-name)
+        - name: manifest-dir
+          value: $(params.manifest-dir)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
 
     - name: bdd
       runAfter:
         - deploy
       taskRef:
-        name: bdd-task
+        name: behave
       params:
         - name: base-url
           value: $(params.base-url)
