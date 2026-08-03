@@ -56,10 +56,12 @@ spec:
           python -m pip install --user -r "$(params.requirements-file)"
         fi
 
-        python -m pip install pylint
+        python -m pip install flake8 pylint
 
         echo "***** Running Linting *****"
-        pylint $@ "$(params.path)"
+        flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
+        pylint service tests --max-line-length=127
       args:
         - "$(params.args)"
 
@@ -169,19 +171,19 @@ spec:
           #!/bin/bash
           set -e
 
-          echo Applying manifests in $(inputs.params.manifest-dir) directory
+          echo Applying manifests in $(params.manifest-dir) directory
 
           echo "Installing YQ..."
           wget -qO /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           chmod a+x /usr/bin/yq
 
-          echo "Deploying $(inputs.params.image-name) ..."
-          yq -e -i '.spec.template.spec.containers[0].image="$(inputs.params.image-name)"' $(inputs.params.manifest-dir)/deployment.yaml
-          cat $(inputs.params.manifest-dir)/deployment.yaml
+          echo "Deploying $(params.image-name) ..."
+          yq -e -i '.spec.template.spec.containers[0].image="$(params.image-name)"' $(params.manifest-dir)/deployment.yaml
+          cat $(params.manifest-dir)/deployment.yaml
 
           echo "OC APPLY..."
-          oc apply -f $(inputs.params.manifest-dir)/deployment.yaml
-          oc apply -f $(inputs.params.manifest-dir)/service.yaml
+          oc apply -f $(params.manifest-dir)/deployment.yaml
+          oc apply -f $(params.manifest-dir)/service.yaml
 
           sleep 3
           echo "Pods:"
@@ -242,6 +244,15 @@ spec:
           pipenv requirements --dev > requirements.txt
         fi
         python -m pip install --user -r requirements.txt
+
+        echo "***** Waiting for the service at ${BASE_URL} *****"
+        for attempt in {1..24}; do
+          if curl -sf "${BASE_URL}/health"; then
+            break
+          fi
+          echo "  service not ready yet, retrying in 5s"
+          sleep 5
+        done
 
         echo "***** Running Tests *****"
         behave
