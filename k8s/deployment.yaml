@@ -28,7 +28,7 @@ spec:
 
         env:
         - name: DATABASE_URI
-          value: postgresql+psycopg://postgres:postgres@postgres:5432/orders
+          value: postgresql+psycopg://orders:orders@postgres:5432/orders
 
         readinessProbe:
           httpGet:
