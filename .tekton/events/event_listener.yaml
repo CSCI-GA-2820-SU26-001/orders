@@ -5,8 +5,4 @@ metadata:
 spec:
   serviceAccountName: pipeline
   triggers:
-    - name: orders-push-trigger
-      bindings:
-        - ref: orders-push-binding
-      template:
-        ref: orders-push-template
+    - triggerRef: orders-push-trigger
