@@ -27,8 +27,13 @@ spec:
         - containerPort: 8080
 
         env:
+        - name: RETRY_COUNT
+            value: "10"
         - name: DATABASE_URI
-          value: postgresql+psycopg://orders:orders@postgres:5432/orders
+          valueFrom:
+            secretKeyRef:
+            name: postgres-creds
+            key: database_uri
 
         readinessProbe:
           httpGet:
