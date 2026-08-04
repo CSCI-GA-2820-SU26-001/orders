@@ -1,0 +1,10 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: Trigger
+metadata:
+  name: orders-push-trigger
+spec:
+  serviceAccountName: pipeline
+  bindings:
+    - ref: orders-push-binding
+  template:
+    ref: orders-push-template
