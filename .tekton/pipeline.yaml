@@ -51,9 +51,9 @@ spec:
         name: pytest-env
       params:
         - name: secret-name
-          value: postgres-secret
+          value: postgres-creds
         - name: secret-key
-          value: DATABASE_URI
+          value: database_uri
       workspaces:
         - name: source
           workspace: shared-workspace
