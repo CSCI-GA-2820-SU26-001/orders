@@ -113,7 +113,7 @@ class TestYourResourceService(TestCase):
         self.assertIn("text/html", resp.content_type)
         self.assertIn(b'id="read-item-form"', resp.data)
         self.assertIn(b'id="read-item-order-id"', resp.data)
-        self.assertIn(b'id="read-item-item-id"', resp.data)
+        self.assertIn(b'id="read-item-product-id"', resp.data)
         self.assertIn(b'id="read-item-btn"', resp.data)
         self.assertIn(b'id="read-item-details"', resp.data)
 

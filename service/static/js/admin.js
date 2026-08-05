@@ -25,7 +25,7 @@ const updateOrderMessage = document.querySelector("#update-order-message");
 
 const readItemForm = document.querySelector("#read-item-form");
 const readItemOrderIdInput = document.querySelector("#read-item-order-id");
-const readItemItemIdInput = document.querySelector("#read-item-item-id");
+const readItemProductIdInput = document.querySelector("#read-item-product-id");
 const readItemButton = document.querySelector("#read-item-btn");
 const readItemDetails = document.querySelector("#read-item-details");
 const readItemMessage = document.querySelector("#read-item-message");
@@ -426,26 +426,33 @@ async function updateOrder(orderId, customerId, status) {
   }
 }
 
-async function readItem(orderId, itemId) {
+async function readItem(orderId, productId) {
   clearReadItemDetails();
   setReadItemMessage("Reading item…");
   readItemButton.disabled = true;
 
   try {
-    const response = await fetch(`/api/orders/${orderId}/items/${itemId}`, {
+    const response = await fetch(`/api/orders/${orderId}/items`, {
       headers: { Accept: "application/json" },
     });
 
     if (!response.ok) {
       const errorPayload = await response.json().catch(() => ({}));
       setReadItemMessage(
-        errorPayload.message || `Unable to read item (${response.status}).`,
+        errorPayload.message || `Unable to read items (${response.status}).`,
         true
       );
       return;
     }
 
-    const item = await response.json();
+    const items = await response.json();
+    const item = items.find((item) => item.product_id === Number(productId));
+
+    if (!item) {
+      setReadItemMessage("Item with that product ID not found in this order.", true);
+      return;
+    }
+
     renderReadItemDetails(item);
     setReadItemMessage(`Item ${item.id} loaded.`);
   } catch (_error) {
@@ -665,13 +672,13 @@ updateOrderForm.addEventListener("submit", (event) => {
 readItemForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
-  if (!readItemOrderIdInput.checkValidity() || !readItemItemIdInput.checkValidity()) {
+  if (!readItemOrderIdInput.checkValidity() || !readItemProductIdInput.checkValidity()) {
     readItemOrderIdInput.reportValidity();
-    readItemItemIdInput.reportValidity();
+    readItemProductIdInput.reportValidity();
     return;
   }
 
-  readItem(readItemOrderIdInput.value, readItemItemIdInput.value);
+  readItem(readItemOrderIdInput.value, readItemProductIdInput.value);
 });
 
 addItemForm.addEventListener("submit", (event) => {
